@@ -99,7 +99,7 @@ def parse_filetype(fp):
             raise Exception("Non-py4DSTEM formatted .h5 files are not presently supported.")
     elif fext in ['.dm','.dm3','.dm4','.DM','.DM3','.DM4']:
         return 'dm'
-    elif fext in ['.empad']:
+    elif fext in ['.empad', '.raw', '.xml']:  # empad
         # TK TODO
         return 'empad'
     elif fext in ['.mrc']:
