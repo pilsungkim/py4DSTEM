@@ -89,8 +89,8 @@ def read_py4DSTEM(fp, **kwargs):
     # Validate inputs
     if _data_id:
         data_id = kwargs['data_id']
-        assert(isinstance(data_id,(int,np.int_,str,list,tuple))), "Error: data must be specified with strings or integers only."
-        if not isinstance(data_id,(int,np.int_,str)):
+        assert(isinstance(data_id,(int,np.int_,np.int64,str,list,tuple))), "Error: data must be specified with strings or integers only."
+        if not isinstance(data_id,(int,np.int_,np.int64,str)):
             assert(all([isinstance(d,(int,np.int_,str)) for d in data_id])), "Error: data must be specified with strings or integers only."
     if _metadata:
         assert(isinstance(kwargs.keys['metdata'],bool))
@@ -107,7 +107,7 @@ def read_py4DSTEM(fp, **kwargs):
         mem='RAM'
     if 'binfactor' in kwargs.keys():
         binfactor = kwargs['binfactor']
-        assert(isinstance(binfactor,(int,np.int_)))
+        assert(isinstance(binfactor,(int,np.int_,np.int64)))
     else:
         binfactor=1
     if 'dtype' in kwargs.keys():
@@ -153,7 +153,7 @@ def print_py4DSTEM_file(fp,tg):
 def get_data(fp,tg,data_id,mem='RAM',binfactor=1,bindtype=None):
     """ Accepts a fp to a valid py4DSTEM file and an int/str/list specifying data, and returns the data.
     """
-    if isinstance(data_id,(int,np.int_)):
+    if isinstance(data_id,(int,np.int_,np.int64)):
         return get_data_from_int(fp,tg,data_id,mem=mem,binfactor=binfactor,bindtype=bindtype)
     elif isinstance(data_id,str):
         return get_data_from_str(fp,tg,data_id,mem=mem,binfactor=binfactor,bindtype=bindtype)
@@ -163,7 +163,7 @@ def get_data(fp,tg,data_id,mem='RAM',binfactor=1,bindtype=None):
 def get_data_from_int(fp,tg,data_id,mem='RAM',binfactor=1,bindtype=None):
     """ Accepts a fp to a valid py4DSTEM file and an integer specifying data, and returns the data.
     """
-    assert(isinstance(data_id,(int,np.int_)))
+    assert(isinstance(data_id,(int,np.int_,np.int64)))
     with h5py.File(fp,'r') as f:
         grp_dc = f[tg+'/data/datacubes/']
         grp_cdc = f[tg+'/data/counted_datacubes/']
