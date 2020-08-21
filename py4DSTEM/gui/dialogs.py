@@ -122,6 +122,7 @@ class LoadPreprocessSaveWidget(QtWidgets.QWidget):
         self.loadRadioAuto.setChecked(True)
         self.loadRadioMMAP = QtWidgets.QRadioButton("DM Memory Map")
         self.loadRadioGatan = QtWidgets.QRadioButton("Gatan K2 Binary")
+        self.loadRadioEMPAD = QtWidgets.QRadioButton("EMPAD")
 
 
         self.label_Filename.setFont(normalFont)
@@ -135,6 +136,7 @@ class LoadPreprocessSaveWidget(QtWidgets.QWidget):
         optionLine.addWidget(self.loadRadioAuto)
         optionLine.addWidget(self.loadRadioMMAP)
         optionLine.addWidget(self.loadRadioGatan)
+        optionLine.addWidget(self.loadRadioEMPAD)
 
         line2 = QtWidgets.QHBoxLayout()
         line2.addWidget(self.pushButton_BrowseFiles,0,QtCore.Qt.AlignRight)

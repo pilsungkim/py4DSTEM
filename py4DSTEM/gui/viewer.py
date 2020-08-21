@@ -310,6 +310,8 @@ class DataViewer(QtWidgets.QMainWindow):
                 self.datacube,_ = read(fname, mem="MEMMAP")
         elif self.control_widget.widget_LoadPreprocessSave.widget.loadRadioGatan.isChecked():
             self.datacube,_ = read(fname, ft='gatan_bin')
+        elif self.control_widget.widget_LoadPreprocessSave.widget.loadRadioGatan.isChecked():
+            self.datacube,_ = read(fname, ft='empad')
 
         # Update scan shape information
         self.settings.R_Nx.update_value(self.datacube.R_Nx)
