@@ -1,26 +1,35 @@
 #!/Users/Ben/Code/anaconda2/envs/py3/bin/python
 
 import sys
+import py4DSTEM.process.utils.constants as ct
 from PyQt5 import QtCore, QtWidgets, QtGui
 
+
 # Set global style parameters
+from PyQt5.QtCore import Qt
+
+default_font = 'Times New Roman'
 
 titleFont = QtGui.QFont()
+titleFont.setFamily(default_font)
 titleFont.setPointSize(12)
-titleFont.setItalic(True)
+titleFont.setItalic(False)
 titleFont.setBold(True)
 
 sectionFont = QtGui.QFont()
+sectionFont.setFamily(default_font)
 sectionFont.setPointSize(12)
-sectionFont.setItalic(True)
+sectionFont.setItalic(False)
 sectionFont.setBold(False)
 
 normalFont = QtGui.QFont()
+normalFont.setFamily(default_font)
 normalFont.setPointSize(12)
 normalFont.setItalic(False)
 normalFont.setBold(False)
 
 smallFont = QtGui.QFont()
+smallFont.setFamily(default_font)
 smallFont.setPointSize(10)
 smallFont.setItalic(False)
 smallFont.setBold(False)
@@ -361,19 +370,22 @@ class VirtualDetectorsWidget(QtWidgets.QWidget):
 
         # Detector shape
         detector_shape_widget = QtWidgets.QWidget()
-        detector_shape_widget_layout = QtWidgets.QVBoxLayout()
+        detector_shape_widget_layout = QtWidgets.QHBoxLayout()
 
         self.radioButton_RectDetector = QtWidgets.QRadioButton('Rectangular')
         self.radioButton_CircDetector = QtWidgets.QRadioButton('Circular')
         self.radioButton_AnnularDetector = QtWidgets.QRadioButton('Annular')
+        self.radioButton_PointDetector = QtWidgets.QRadioButton('Pick')
 
         self.radioButton_RectDetector.setFont(normalFont)
         self.radioButton_CircDetector.setFont(normalFont)
         self.radioButton_AnnularDetector.setFont(normalFont)
+        self.radioButton_PointDetector.setFont(normalFont)
 
         detector_shape_widget_layout.addWidget(self.radioButton_RectDetector)
         detector_shape_widget_layout.addWidget(self.radioButton_CircDetector)
         detector_shape_widget_layout.addWidget(self.radioButton_AnnularDetector)
+        detector_shape_widget_layout.addWidget(self.radioButton_PointDetector)
         detector_shape_widget.setLayout(detector_shape_widget_layout)
 
         # Create detector shape button group
@@ -381,10 +393,34 @@ class VirtualDetectorsWidget(QtWidgets.QWidget):
         self.buttonGroup_DetectorShape.addButton(self.radioButton_RectDetector)
         self.buttonGroup_DetectorShape.addButton(self.radioButton_CircDetector)
         self.buttonGroup_DetectorShape.addButton(self.radioButton_AnnularDetector)
+        self.buttonGroup_DetectorShape.addButton(self.radioButton_PointDetector)
 
         self.buttonGroup_DetectorShape.setId(self.radioButton_RectDetector, 0)
         self.buttonGroup_DetectorShape.setId(self.radioButton_CircDetector, 1)
         self.buttonGroup_DetectorShape.setId(self.radioButton_AnnularDetector, 2)
+        self.buttonGroup_DetectorShape.setId(self.radioButton_PointDetector, 3)
+        ################################NEW#################################
+        add_detector_shape_button_group_widget = QtWidgets.QWidget()
+        detector_shape_button_widget_layout = QtWidgets.QHBoxLayout()
+        self.pushButton_RectDetector = QtWidgets.QPushButton('Rectangular')
+        self.pushButton_CircDetector = QtWidgets.QPushButton('Circular')
+        self.pushButton_AnnularDetector = QtWidgets.QPushButton('Annular')
+        self.pushButton_PointDetector = QtWidgets.QPushButton('Pick')
+        self.pushButton_RectDetector.setFont(normalFont)
+        self.pushButton_CircDetector.setFont(normalFont)
+        self.pushButton_AnnularDetector.setFont(normalFont)
+        self.pushButton_PointDetector.setFont(normalFont)
+        detector_shape_button_widget_layout.addWidget(self.pushButton_RectDetector)
+        detector_shape_button_widget_layout.addWidget(self.pushButton_CircDetector)
+        detector_shape_button_widget_layout.addWidget(self.pushButton_AnnularDetector)
+        detector_shape_button_widget_layout.addWidget(self.pushButton_PointDetector)
+        add_detector_shape_button_group_widget.setLayout(detector_shape_button_widget_layout)
+
+        detector_shape_group_widget = QtWidgets.QWidget()
+        self.detector_shape_group_widget_layout = QtWidgets.QVBoxLayout()
+        self.detector_shape_group_widget_layout.setContentsMargins(0,20,0,20)
+        detector_shape_group_widget.setLayout(self.detector_shape_group_widget_layout)
+        #######################################################################
 
         # Detector mode
         detector_mode_widget = QtWidgets.QWidget()
@@ -417,11 +453,11 @@ class VirtualDetectorsWidget(QtWidgets.QWidget):
         self.buttonGroup_DetectorMode.addButton(self.radioButton_CoMX)
         self.buttonGroup_DetectorMode.addButton(self.radioButton_CoMY)
 
-        self.buttonGroup_DetectorMode.setId(self.radioButton_Integrate, 0)
-        self.buttonGroup_DetectorMode.setId(self.radioButton_DiffX, 1)
-        self.buttonGroup_DetectorMode.setId(self.radioButton_DiffY, 2)
-        self.buttonGroup_DetectorMode.setId(self.radioButton_CoMX, 3)
-        self.buttonGroup_DetectorMode.setId(self.radioButton_CoMY, 4)
+        self.buttonGroup_DetectorMode.setId(self.radioButton_Integrate, ct.DetectorModeType.integrate)
+        self.buttonGroup_DetectorMode.setId(self.radioButton_DiffX, ct.DetectorModeType.diffX)
+        self.buttonGroup_DetectorMode.setId(self.radioButton_DiffY, ct.DetectorModeType.diffY)
+        self.buttonGroup_DetectorMode.setId(self.radioButton_CoMX, ct.DetectorModeType.CoMX)
+        self.buttonGroup_DetectorMode.setId(self.radioButton_CoMY, ct.DetectorModeType.CoMY)
 
         # Diffraction Scaling Control
         diffraction_mode_widget = QtWidgets.QWidget()
@@ -475,7 +511,9 @@ class VirtualDetectorsWidget(QtWidgets.QWidget):
         # Layout
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(SectionLabel('Detector Shape'))
-        layout.addWidget(detector_shape_widget)
+        # layout.addWidget(detector_shape_widget)
+        layout.addWidget(add_detector_shape_button_group_widget)
+        layout.addWidget(detector_shape_group_widget)
         layout.addWidget(SectionLabel('Detector Mode'))
         layout.addWidget(detector_mode_widget)
         layout.addWidget(SectionLabel('Diffraction Pattern Scaling'))
@@ -490,11 +528,100 @@ class VirtualDetectorsWidget(QtWidgets.QWidget):
 
 
 
+class DetectorShapeWidget(QtWidgets.QWidget):
+    def __init__(self, shape:str):
+        super().__init__()
 
+        self.frame = QtWidgets.QFrame()
+        self.frame_layout = QtWidgets.QVBoxLayout()
+        self.frame.setLayout(self.frame_layout)
+        self.frame_layout.setSpacing(0)
+        self.frame_layout.setContentsMargins(10,10,10,10)
+
+        self.layout = QtWidgets.QVBoxLayout()
+        self.layout.setContentsMargins(30, 10, 30, 10)
+        self.setLayout(self.layout)
+        self.layout.addWidget(self.frame)
+
+        self.titlebar = QtWidgets.QFrame()
+        self.titlebar_layout = QtWidgets.QHBoxLayout()
+        self.titlebar_layout.setContentsMargins(0,0,0,0)
+        self.titlebar.setLayout(self.titlebar_layout)
+        self.shapeName = QtWidgets.QLabel("Rectangular mask")
+        self.shapeName.setFont(normalFont)
+        self.shapeName.setAlignment(Qt.AlignLeft)
+        self.titlebar_layout.addWidget(self.shapeName, 2)
+
+        self.delButton = QtWidgets.QPushButton("Del")
+        self.titlebar_layout.addWidget(self.delButton)
+
+        self.frame_layout.addWidget(self.titlebar)
+
+        self.bottom = QtWidgets.QWidget()
+        self.bottomGridLayout = QtWidgets.QGridLayout()
+        self.bottomGridLayout.setContentsMargins(0,0,0,10)
+        self.bottom.setLayout(self.bottomGridLayout)
+        self.frame_layout.addWidget(self.bottom)
+        self.frame.setObjectName("frame")
+        self.frame_layout.setSpacing(0)
+        self.frame.setStyleSheet("QFrame#frame{border: 3px solid #444a4f;}")
+
+        # BottomGrid
+        self.firstLineLabel = QtWidgets.QLabel("x , y")
+        self.firstLineLabel.setAlignment(Qt.AlignCenter)
+        self.firstLineLabel.setMinimumWidth(70)
+
+        self.firstLineText1 = QtWidgets.QTextEdit("")
+        self.firstLineText1.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.firstLineText1.setMaximumHeight(15)
+        self.firstLineText1.setAlignment(Qt.AlignCenter)
+
+        self.firstLineText2 = QtWidgets.QTextEdit("")
+        self.firstLineText2.setMaximumHeight(15)
+        self.firstLineText2.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.firstLineText2.setAlignment(Qt.AlignCenter)
+
+        self.secondLineLabel = QtWidgets.QLabel("")
+        self.secondLineLabel.setMinimumWidth(70)
+        self.secondLineLabel.setAlignment(Qt.AlignCenter)
+
+        self.secondLineText1 = QtWidgets.QTextEdit("")
+        self.secondLineText1.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.secondLineText1.setMaximumHeight(15)
+        self.secondLineText1.setAlignment(Qt.AlignCenter)
+
+        self.secondLineText2 = QtWidgets.QTextEdit("")
+        self.secondLineText2.setMaximumHeight(15)
+        self.secondLineText2.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.secondLineText2.setAlignment(Qt.AlignCenter)
+
+        self.bottomGridLayout.addWidget(self.firstLineLabel, 0, 0)
+        self.bottomGridLayout.addWidget(self.firstLineText1, 0, 1)
+        self.bottomGridLayout.addWidget(self.firstLineText2, 0, 2)
+        self.bottomGridLayout.addWidget(self.secondLineLabel, 1, 0)
+        self.bottomGridLayout.addWidget(self.secondLineText1, 1, 1)
+        self.bottomGridLayout.addWidget(self.secondLineText2, 1, 2)
+
+        if shape == 0:
+            self.shapeName.setText("Rectangular Mask")
+            self.secondLineLabel.setText("size X,Y")
+        if shape == 1:
+            self.shapeName.setText("Circular Mask")
+            self.secondLineLabel.setText("radius")
+            self.secondLineText2.hide()
+        if shape == 2:
+            self.shapeName.setText("Annular Mask")
+            self.secondLineLabel.setText("inner/out rad")
+        if shape == 3:
+            self.shapeName.setText("Point Mask")
+            self.secondLineLabel.hide()
+            self.secondLineText1.hide()
+            self.secondLineText2.hide()
 
 
 
 ################### Non control-panel widgets #####################
+
 
 class SaveWidget(QtWidgets.QWidget):
     """
@@ -656,6 +783,7 @@ class HideableWidget(QtWidgets.QWidget):
 
 		# Change hide/show checkboxes to triangles
         title_frame.setStyleSheet(
+            "background-color: #000000;"
 			"QCheckBox::indicator {width:14;height: 14px;}"
 			"QCheckBox::indicator:checked { image:url(./gui/icons/arrow_open.png)}"
 			"QCheckBox::indicator:unchecked { image:url(./gui/icons/arrow_closed.png)}"

@@ -59,8 +59,9 @@ def get_virtual_image_circ_integrate(datacube, slice_x, slice_y):
     Returns a virtual image as an ndarray, generated from a circular detector in integration
     mode. Also returns a bool indicating success or failure.
     """
+    mask = get_circ_mask(slice_x.stop-slice_x.start, slice_y.stop-slice_y.start)
     try:
-        return np.sum(datacube.data[:,:,slice_x,slice_y]*get_circ_mask(slice_x.stop-slice_x.start, slice_y.stop-slice_y.start), axis=(2,3)), 1
+        return np.sum(datacube.data[:,:,slice_x,slice_y]*mask, axis=(2,3)), 1
     except ValueError:
         return 0,0
 

@@ -20,6 +20,8 @@ from ...file.io import read
 from ...file.io.native import save, append, is_py4DSTEM_file
 from ...file.datastructure import DiffractionSlice, RealSlice
 from .ImageViewMasked import ImageViewAlpha
+import py4DSTEM.process.utils.constants as ct
+import py4DSTEM.process.virtualimage.mask as mk
 
 ### use for debugging:
 from pdb import set_trace
@@ -107,9 +109,9 @@ class ProbeKernelTab(QtWidgets.QWidget):
 		try:
 			dc = self.main_window.strain_window.vac_datacube
 			slices, transforms = self.diffraction_ROI.getArraySlice(dc.data[0,0,:,:], self.diffraction_widget.getImageItem())
-			slice_x,slice_y = slices
-
-			new_real_space_view, success = dc.get_virtual_image_rect_integrate(slice_x,slice_y)
+			mask = mk.RoiMask(slices,roiShape=ct.DetectorShape.rectangular)
+			rs = dc.get_virtual_image(ct.DetectorModeType.integrate,mask)
+			new_real_space_view, success = rs
 			if success:
 				self.realspace_widget.setImage(new_real_space_view**0.5,autoLevels=True)
 			else:
@@ -1394,9 +1396,10 @@ class StrainMapTab(QtWidgets.QWidget):
 	def update_RS(self):
 		dc = self.main_window.datacube
 		slices, transforms = self.DP_ROI.getArraySlice(dc.data[0,0,:,:], self.DP_view.getImageItem())
-		slice_x,slice_y = slices
+		mask = mk.RoiMask(slices, roiShape=ct.DetectorShape.rectangular)
+		rs = dc.get_virtual_image(ct.DetectorModeType.integrate, mask)
+		new_real_space_view, success = rs
 
-		new_real_space_view, success = dc.get_virtual_image_rect_integrate(slice_x,slice_y)
 		if success:
 			self.RS_view.setImage(new_real_space_view**0.5,autoLevels=True)
 		else:

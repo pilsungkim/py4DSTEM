@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import py4DSTEM
-#from gui.viewer import DataViewer
+from py4DSTEM.gui import DataViewer
 import sys
 
 def launch():

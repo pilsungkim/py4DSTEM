@@ -1,7 +1,8 @@
 # Functions for generating virtual images
 
 import numpy as np
-from ...file.datastructure import DataCube
+# from ...file.datastructure import DataCube
+from py4DSTEM.file.datastructure import DataCube
 
 def test():
     return True

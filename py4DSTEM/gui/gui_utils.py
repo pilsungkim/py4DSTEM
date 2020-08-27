@@ -75,12 +75,12 @@ def sibling_path(fpath, fname):
     """
     return join(dirname(fpath), fname)
 
-def pg_point_roi(view_box):
+def pg_point_roi(view_box, x=0, y=0):
     """
     Point selection.  Based in pyqtgraph, and returns a pyqtgraph CircleROI object.
     This object has a sigRegionChanged.connect() signal method to connect to other functions.
     """
-    circ_roi = pg.CircleROI( (-0.5,-0.5), (2,2), movable=True, pen=(0,9))
+    circ_roi = pg.CircleROI( (-0.5+x, -0.5+y), (2,2), movable=True, pen=(0,9))
     h = circ_roi.addTranslateHandle((0.5,0.5))
     h.pen = pg.mkPen('r')
     h.update()
@@ -200,7 +200,7 @@ class LoggedQuantity(QtCore.QObject):
                 self.update_value(widget.text())
             widget.editingFinished.connect(on_edit_finished)
 
-        elif type(widget) == QtWidget.QLabel:
+        elif type(widget) == QtWidgets.QLabel:
             self.updated_value.connect(widget.setText)
 
         elif type(widget) == pg.widgets.SpinBox.SpinBox:
