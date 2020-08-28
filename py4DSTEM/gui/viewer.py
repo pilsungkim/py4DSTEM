@@ -58,7 +58,9 @@ class DataViewer(QtWidgets.QMainWindow):
         """
         Initialize class, setting up windows and widgets.
         """
-        self.update_roi_flag = True
+        # flag
+        self.updating_roi = False
+
         # Define this as the QApplication object
         self.qtapp = QtWidgets.QApplication.instance()
         if not self.qtapp:
@@ -90,9 +92,9 @@ class DataViewer(QtWidgets.QMainWindow):
 
         # Set up initial views in real and diffraction space
         self.update_diffraction_space_view()
-        self.update_virtual_detector_shape()
-        self.update_virtual_detector_mode()
-        self.update_real_space_view2()
+        # self.update_virtual_detector_shape()
+        # self.update_virtual_detector_mode()
+        # self.update_real_space_view2()
         self.diffraction_space_widget.ui.normDivideRadio.setChecked(True)
         self.diffraction_space_widget.normRadioChanged()
 
@@ -170,10 +172,10 @@ class DataViewer(QtWidgets.QMainWindow):
         self.settings.diffraction_scaling_mode.updated_value.connect(self.diffraction_scaling_changed)
 
         #########################
-        self.control_widget.virtualDetectors.widget.pushButton_RectDetector.clicked.connect(lambda x: self.create_virtual_detector(ct.DetectorShape.rectangular))
-        self.control_widget.virtualDetectors.widget.pushButton_CircDetector.clicked.connect(lambda x: self.create_virtual_detector(ct.DetectorShape.circular))
-        self.control_widget.virtualDetectors.widget.pushButton_AnnularDetector.clicked.connect(lambda x: self.create_virtual_detector(ct.DetectorShape.annular))
-        self.control_widget.virtualDetectors.widget.pushButton_PointDetector.clicked.connect(lambda x: self.create_virtual_detector(ct.DetectorShape.point))
+        self.control_widget.virtualDetectors.widget.pushButton_RectDetector.clicked.connect(lambda: self.create_virtual_detector(ct.DetectorShape.rectangular))
+        self.control_widget.virtualDetectors.widget.pushButton_CircDetector.clicked.connect(lambda: self.create_virtual_detector(ct.DetectorShape.circular))
+        self.control_widget.virtualDetectors.widget.pushButton_AnnularDetector.clicked.connect(lambda: self.create_virtual_detector(ct.DetectorShape.annular))
+        self.control_widget.virtualDetectors.widget.pushButton_PointDetector.clicked.connect(lambda: self.create_virtual_detector(ct.DetectorShape.point))
         #########################
 
         self.widget_roi_dic = {}
@@ -204,12 +206,12 @@ class DataViewer(QtWidgets.QMainWindow):
 
         # add button mapping
         virtual_detector_shape_control_widget.delButton.clicked.connect(
-            lambda x: self.deleteRec(virtual_detector_shape_control_widget))
-        virtual_detector_shape_control_widget.firstLineText1.valueChanged.connect(self.update_roi)
-        virtual_detector_shape_control_widget.firstLineText2.valueChanged.connect(self.update_roi)
-        virtual_detector_shape_control_widget.secondLineText1.valueChanged.connect(self.update_roi)
-        virtual_detector_shape_control_widget.secondLineText2.valueChanged.connect(self.update_roi)
-
+            lambda: self.deleteRec(virtual_detector_shape_control_widget))
+        # virtual_detector_shape_control_widget.firstLineText1.valueChanged.connect(self.update_roi)
+        # virtual_detector_shape_control_widget.firstLineText2.valueChanged.connect(self.update_roi)
+        # virtual_detector_shape_control_widget.secondLineText1.valueChanged.connect(self.update_roi)
+        # virtual_detector_shape_control_widget.secondLineText2.valueChanged.connect(self.update_roi)
+        virtual_detector_shape_control_widget.addKeyEvent(self.update_roi)
 
         virtual_detector_rois = [types]
         # add rois
@@ -233,18 +235,18 @@ class DataViewer(QtWidgets.QMainWindow):
 
             # Connect size/position of inner and outer detectors
             virtual_detector_roi_outer.sigRegionChangeFinished.connect(
-                lambda x: self.update_annulus_pos(virtual_detector_roi_inner, virtual_detector_roi_outer))
+                lambda: self.update_annulus_pos(virtual_detector_roi_inner, virtual_detector_roi_outer))
             virtual_detector_roi_outer.sigRegionChangeFinished.connect(
-                lambda x: self.update_annulus_radii(virtual_detector_roi_inner, virtual_detector_roi_outer))
+                lambda: self.update_annulus_radii(virtual_detector_roi_inner, virtual_detector_roi_outer))
             virtual_detector_roi_inner.sigRegionChangeFinished.connect(
-                lambda x: self.update_annulus_radii(virtual_detector_roi_inner, virtual_detector_roi_outer))
+                lambda: self.update_annulus_radii(virtual_detector_roi_inner, virtual_detector_roi_outer))
 
             # Connect to real space view update function
             # virtual_detector_roi_outer.sigRegionChangeFinished.connect(self.update_real_space_view2)
             # virtual_detector_roi_inner.sigRegionChangeFinished.connect(self.update_real_space_view2)
 
-            virtual_detector_rois.append(virtual_detector_roi_inner)
             virtual_detector_rois.append(virtual_detector_roi_outer)
+            virtual_detector_rois.append(virtual_detector_roi_inner)
 
         if types == ct.DetectorShape.point:  # point
             roi = pg_point_roi(self.real_space_widget.getView(),x0,y0)
@@ -256,6 +258,7 @@ class DataViewer(QtWidgets.QMainWindow):
         #     roi.sigRegionChangeFinished.connect(self.update_real_space_view2)
         roi = virtual_detector_rois[1]
         roi.sigRegionChangeFinished.connect(self.update_real_space_view2)
+
 
         self.widget_roi_dic.update({virtual_detector_shape_control_widget: virtual_detector_rois})
         self.update_real_space_view2()
@@ -424,7 +427,7 @@ class DataViewer(QtWidgets.QMainWindow):
         # self.update_virtual_detector_shape()
         # self.update_virtual_detector_mode()
         self.create_virtual_detector(ct.DetectorShape.rectangular)
-        self.update_real_space_view2()
+        # self.update_real_space_view2()
 
         # Normalize diffraction space view
         self.diffraction_space_widget.ui.normDivideRadio.setChecked(True)
@@ -681,6 +684,7 @@ class DataViewer(QtWidgets.QMainWindow):
     ################# Virtual Detectors #################
 
     def update_virtual_detector_shape(self):
+        print("update_virtual_detector_shape")
         """
         Virtual detector shapes are mapped to integers, following the IDs assigned to the
         radio buttons in VirtualDetectorWidget in dialogs.py.  They are as follows:
@@ -762,6 +766,7 @@ class DataViewer(QtWidgets.QMainWindow):
             outer.setPos(x0-R_inner-3, y0-R_inner-3)
 
     def update_virtual_detector_mode(self):
+        print("update_virtual_detector_mode")
     #     """
     #     Virtual detector modes are mapped to integers, following the IDs assigned to the
     #     radio buttons in VirtualDetectorWidget in dialogs.py.  They are as follows:
@@ -874,12 +879,12 @@ class DataViewer(QtWidgets.QMainWindow):
 
     def update_dialog(self):
 
-        if not self.update_roi_flag:
+        if self.updating_roi:
             return
 
         if self.widget_roi_dic is None:
             return
-
+        print("update_dialog_start")
         controlwidget: DetectorShapeWidget
         virtual_detector_mode = self.settings.virtual_detector_mode.val
         for controlwidget in self.widget_roi_dic.keys():
@@ -890,9 +895,9 @@ class DataViewer(QtWidgets.QMainWindow):
             roi_state = roi.getState()
             x0, y0 = roi_state['pos']
             size_x, size_y = roi_state['size']
-            center_x = (x0+size_x) / 2
-            center_y = (y0+size_y) / 2
             _R = size_x / 2
+            center_x = (x0+_R)
+            center_y = (y0+_R)
 
 
             # slice_x, slice_y = self.getSlices(roi)
@@ -903,64 +908,88 @@ class DataViewer(QtWidgets.QMainWindow):
             # x0 = slice_x.start
             # y0 = slice_y.start
             # _R = size_x / 2
-
-            if self.widget_roi_dic[controlwidget][0] == ct.DetectorShape.annular:
+            types = self.widget_roi_dic[controlwidget][0]
+            if types == ct.DetectorShape.annular:
                 roi2: pg.ROI = self.widget_roi_dic[controlwidget][2]
-                roi_state = roi.getState()
-                size_x, size_y = roi_state['size']
+                roi2_state = roi2.getState()
+                size_x, size_y = roi2_state['size']
                 _innerR = size_x/2
 
-            if self.widget_roi_dic[controlwidget][0] == ct.DetectorShape.rectangular:
+            if types == ct.DetectorShape.rectangular:
                 controlwidget.firstLineText1.setValue(x0)
                 controlwidget.firstLineText2.setValue(y0)
                 controlwidget.secondLineText1.setValue(size_x)
                 controlwidget.secondLineText2.setValue(size_y)
-            elif self.widget_roi_dic[controlwidget][0] == ct.DetectorShape.circular:
+            elif types == ct.DetectorShape.circular:
                 controlwidget.firstLineText1.setValue(center_x)
                 controlwidget.firstLineText2.setValue(center_y)
                 controlwidget.secondLineText1.setValue(_R)
-            elif self.widget_roi_dic[controlwidget][0] == ct.DetectorShape.annular:
+            elif types == ct.DetectorShape.annular:
                 controlwidget.firstLineText1.setValue(center_x)
                 controlwidget.firstLineText2.setValue(center_y)
                 controlwidget.secondLineText1.setValue(_R)
                 controlwidget.secondLineText2.setValue(_innerR)
-            elif self.widget_roi_dic[controlwidget][0] == ct.DetectorShape.point:
+            elif types == ct.DetectorShape.point:
                 controlwidget.firstLineText1.setValue(x0)
                 controlwidget.firstLineText2.setValue(y0)
 
-    def update_roi(self):
-        self.update_roi_flag = False
 
+    def update_roi(self):
+        print("update_roi_start")
+        self.updating_roi = True
         controlwidget: DetectorShapeWidget
         for controlwidget in self.widget_roi_dic.keys():
 
+            types = self.widget_roi_dic[controlwidget][0]
             # InitialLizing ROIs #
             roi: pg.ROI = self.widget_roi_dic[controlwidget][1]
-            if self.widget_roi_dic[controlwidget][0] == ct.DetectorShape.annular: #for Annular
+
+            prev_state = roi.getState()
+            state = roi.getState()
+
+            if types == ct.DetectorShape.annular: #for Annular
                 roi2: pg.ROI = self.widget_roi_dic[controlwidget][2]
+                state2 = roi.getState()
+
+            # Set Size #
+            if types == ct.DetectorShape.rectangular:
+                size_x = controlwidget.secondLineText1.value()
+                size_y = controlwidget.secondLineText2.value()
+                state['size']=(size_x,size_y)
+            elif types == ct.DetectorShape.circular:
+                _R = controlwidget.secondLineText1.value()
+                size_x = _R*2
+                size_y = size_x
+                state['size']=(size_x,size_y)
+            elif types == ct.DetectorShape.annular:
+                _outerR = controlwidget.secondLineText1.value()
+                _innerR = controlwidget.secondLineText2.value()
+                state['size']=(_outerR*2,_outerR*2)
+                state2['size']=(_innerR*2,_innerR*2)
+
 
             # Set Pos #
             x0 = controlwidget.firstLineText1.value()
             y0 = controlwidget.firstLineText2.value()
-            roi.setPos((x0, y0))
+            if types == ct.DetectorShape.circular:  # for Annular
+                state['pos']=(x0-_R, y0-_R)
+            elif types == ct.DetectorShape.annular:
+                state2['pos']=(x0-_innerR, y0-_innerR)
+                state['pos']=(x0-_outerR, y0-_outerR)
+                roi2.setState(state2)
+            else:
+                state['pos']=(x0, y0)
 
-            # Set Size #
-            if self.widget_roi_dic[controlwidget][0] == ct.DetectorShape.rectangular:
-                size_x = controlwidget.secondLineText1.value()
-                size_y = controlwidget.secondLineText2.value()
-                roi.setSize((size_x,size_y))
-            elif self.widget_roi_dic[controlwidget][0] == ct.DetectorShape.circular:
-                _R = controlwidget.secondLineText1.value()
-                size_x = _R*2
-                size_y = size_x
-                roi.setSize((size_x,size_y))
-            elif self.widget_roi_dic[controlwidget][0] == ct.DetectorShape.annular:
-                _innerR = controlwidget.secondLineText1.value()
-                _outerR = controlwidget.secondLineText2.value()
-                roi.setSize((_innerR*2,_innerR*2))
-                roi2.setSize((_outerR*2,_outerR*2))
+            flag = True
+            if state['pos'][0] == prev_state['pos'][0] and \
+                state['pos'][1] == prev_state['pos'][1] and \
+                state['size'][0] == prev_state['size'][0] and \
+                state['size'][1] == prev_state['size'][1] :
+                flag = False
+            if flag:
+                roi.setState(state)
 
-        self.update_roi_flag = True
+        self.updating_roi = False
 
 
     def update_real_space_view2(self):
@@ -975,26 +1004,22 @@ class DataViewer(QtWidgets.QMainWindow):
         # create mask
         roi_mask_grp = []
         for roi in self.widget_roi_dic.values():
+            slices, transforms = roi[1].getArraySlice(self.datacube.data[0, 0, :, :],self.diffraction_space_widget.getImageItem())
             if roi[0] in (ct.DetectorShape.rectangular,ct.DetectorShape.circular):
-                slices, transforms = roi[1].getArraySlice(self.datacube.data[0, 0, :, :],
-                                                                             self.diffraction_space_widget.getImageItem())
                 mask = mk.RoiMask(roiShape=roi[0],slices=slices)
-                roi_mask_grp.append(mask)
             elif roi[0] is ct.DetectorShape.point:
                 x = np.int(np.ceil(roi[1].x()))
                 y = np.int(np.ceil(roi[1].y()))
                 slices = (slice(x,x+1),slice(y,y+1))
                 mask = mk.RoiMask(roiShape=roi[0], slices=slices)
-                roi_mask_grp.append(mask)
             elif roi[0] is ct.DetectorShape.annular:
-                slices, transforms = roi[2].getArraySlice(self.datacube.data[0, 0, :, :],self.diffraction_space_widget.getImageItem())
                 slice_x, slice_y = slices
-                slices_inner, transforms = roi[1].getArraySlice(self.datacube.data[0, 0, :, :],self.diffraction_space_widget.getImageItem())
+                slices_inner, transforms = roi[2].getArraySlice(self.datacube.data[0, 0, :, :],self.diffraction_space_widget.getImageItem())
                 slice_inner_x, slice_inner_y = slices_inner
                 R = 0.5 * ((slice_inner_x.stop - slice_inner_x.start) / (slice_x.stop - slice_x.start) + (
                             slice_inner_y.stop - slice_inner_y.start) / (slice_y.stop - slice_y.start))
                 mask = mk.RoiMask(roiShape=roi[0], slices=slices, innerR=R)
-                roi_mask_grp.append(mask)
+            roi_mask_grp.append(mask)
 
         # Get Virtual Image
 
@@ -1087,7 +1112,6 @@ class DataViewer(QtWidgets.QMainWindow):
 
     ######### Handle keypresses to move realspace cursor ##########
     def keyPressEvent(self,e):
-        mode = self.settings.arrowkey_mode.val
 
         if mode == 0: # we are in realspace mode
             roi_state = self.real_space_point_selector.saveState()
@@ -1128,6 +1152,7 @@ class DataViewer(QtWidgets.QMainWindow):
             self.releaseKeyboard()
         else:
             self.grabKeyboard()
+
 
     def exec_(self):
         return self.qtapp.exec_()

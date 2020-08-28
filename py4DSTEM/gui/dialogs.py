@@ -531,7 +531,7 @@ class VirtualDetectorsWidget(QtWidgets.QWidget):
 class DetectorShapeWidget(QtWidgets.QWidget):
     def __init__(self, shape:str):
         super().__init__()
-
+        self.keyEvent_list = []
         self.frame = QtWidgets.QFrame()
         self.frame_layout = QtWidgets.QVBoxLayout()
         self.frame.setLayout(self.frame_layout)
@@ -574,23 +574,29 @@ class DetectorShapeWidget(QtWidgets.QWidget):
         self.firstLineText1 = QtWidgets.QDoubleSpinBox()
         self.firstLineText1.setMaximumHeight(25)
         self.firstLineText1.setAlignment(Qt.AlignCenter)
+        # self.firstLineText1.setKeyboardTracking(False)
 
         self.firstLineText2 = QtWidgets.QDoubleSpinBox()
         self.firstLineText2.setMaximumHeight(25)
         self.firstLineText2.setAlignment(Qt.AlignCenter)
+        # self.firstLineText2.setKeyboardTracking(False)
 
         self.secondLineLabel = QtWidgets.QLabel("")
         self.secondLineLabel.setMinimumWidth(100)
         self.secondLineLabel.setAlignment(Qt.AlignCenter)
 
         self.secondLineText1 = QtWidgets.QDoubleSpinBox()
+        self.secondLineText1.setMinimum(1)
         self.secondLineText1.setMaximumHeight(25)
         self.secondLineText1.setAlignment(Qt.AlignCenter)
+        # self.secondLineText1.setKeyboardTracking(False)
 
         self.secondLineText2 = QtWidgets.QDoubleSpinBox()
+        self.secondLineText2.setMinimum(1)
         self.secondLineText2.setMaximumHeight(25)
         # self.secondLineText2.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.secondLineText2.setAlignment(Qt.AlignCenter)
+        # self.secondLineText1.setKeyboardTracking(False)
 
         self.bottomGridLayout.addWidget(self.firstLineLabel, 0, 0)
         self.bottomGridLayout.addWidget(self.firstLineText1, 0, 1)
@@ -610,12 +616,20 @@ class DetectorShapeWidget(QtWidgets.QWidget):
         if shape == ct.DetectorShape.annular:
             self.shapeName.setText("Annular Mask")
             self.firstLineLabel.setText("center x, y")
-            self.secondLineLabel.setText("inner/out rad")
+            self.secondLineLabel.setText("out/inner rad")
         if shape == ct.DetectorShape.point:
             self.shapeName.setText("Point Mask")
             self.secondLineLabel.hide()
             self.secondLineText1.hide()
             self.secondLineText2.hide()
+
+    def keyReleaseEvent(self, a0: QtGui.QKeyEvent) -> None:
+        if a0.key() in (QtCore.Qt.Key_Down,QtCore.Qt.Key_Up,QtCore.Qt.Key_Enter,QtCore.Qt.Key_Return):
+            for func in self.keyEvent_list:
+                func()
+
+    def addKeyEvent(self, func):
+        self.keyEvent_list.append(func)
 
 
 
