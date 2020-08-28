@@ -1,6 +1,7 @@
 # General reader for 4D-STEM datasets.
 
 import pathlib
+import time
 from os.path import splitext
 from .native import read_py4DSTEM, is_py4DSTEM_file
 from .nonnative import *
@@ -64,7 +65,7 @@ def read(fp, mem="RAM", binfactor=1, ft=None, **kwargs):
     if binfactor > 1:
         assert(mem!='MEMMAP'), "Error: binning is not supported for memory mapping.  Either set binfactor=1 or set mem='RAM'"
     assert(ft in [None,'dm','empad','mrc_relativity','gatan_K2_bin','kitware_counted']), "Error: ft argument not recognized"
-
+    tic = time.process_time()
     if ft is None:
         ft = parse_filetype(fp)
 
@@ -82,7 +83,8 @@ def read(fp, mem="RAM", binfactor=1, ft=None, **kwargs):
         data,md = read_kitware_counted(fp, mem, binfactor, **kwargs)
     else:
         raise Exception("Unrecognized file extension {}.  To force reading as a particular filetype, pass the 'ft' keyword argument.".format(fext))
-
+    toc = time.process_time()
+    print("success to load data in " + str(toc-tic) + "ms")
     return data, md
 
 

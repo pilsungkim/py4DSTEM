@@ -569,30 +569,27 @@ class DetectorShapeWidget(QtWidgets.QWidget):
         # BottomGrid
         self.firstLineLabel = QtWidgets.QLabel("x , y")
         self.firstLineLabel.setAlignment(Qt.AlignCenter)
-        self.firstLineLabel.setMinimumWidth(70)
+        self.firstLineLabel.setMinimumWidth(100)
 
-        self.firstLineText1 = QtWidgets.QTextEdit("")
-        self.firstLineText1.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.firstLineText1.setMaximumHeight(15)
+        self.firstLineText1 = QtWidgets.QDoubleSpinBox()
+        self.firstLineText1.setMaximumHeight(25)
         self.firstLineText1.setAlignment(Qt.AlignCenter)
 
-        self.firstLineText2 = QtWidgets.QTextEdit("")
-        self.firstLineText2.setMaximumHeight(15)
-        self.firstLineText2.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.firstLineText2 = QtWidgets.QDoubleSpinBox()
+        self.firstLineText2.setMaximumHeight(25)
         self.firstLineText2.setAlignment(Qt.AlignCenter)
 
         self.secondLineLabel = QtWidgets.QLabel("")
-        self.secondLineLabel.setMinimumWidth(70)
+        self.secondLineLabel.setMinimumWidth(100)
         self.secondLineLabel.setAlignment(Qt.AlignCenter)
 
-        self.secondLineText1 = QtWidgets.QTextEdit("")
-        self.secondLineText1.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.secondLineText1.setMaximumHeight(15)
+        self.secondLineText1 = QtWidgets.QDoubleSpinBox()
+        self.secondLineText1.setMaximumHeight(25)
         self.secondLineText1.setAlignment(Qt.AlignCenter)
 
-        self.secondLineText2 = QtWidgets.QTextEdit("")
-        self.secondLineText2.setMaximumHeight(15)
-        self.secondLineText2.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.secondLineText2 = QtWidgets.QDoubleSpinBox()
+        self.secondLineText2.setMaximumHeight(25)
+        # self.secondLineText2.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.secondLineText2.setAlignment(Qt.AlignCenter)
 
         self.bottomGridLayout.addWidget(self.firstLineLabel, 0, 0)
@@ -602,17 +599,19 @@ class DetectorShapeWidget(QtWidgets.QWidget):
         self.bottomGridLayout.addWidget(self.secondLineText1, 1, 1)
         self.bottomGridLayout.addWidget(self.secondLineText2, 1, 2)
 
-        if shape == 0:
+        if shape == ct.DetectorShape.rectangular:
             self.shapeName.setText("Rectangular Mask")
             self.secondLineLabel.setText("size X,Y")
-        if shape == 1:
+        if shape == ct.DetectorShape.circular:
             self.shapeName.setText("Circular Mask")
+            self.firstLineLabel.setText("center x, y")
             self.secondLineLabel.setText("radius")
             self.secondLineText2.hide()
-        if shape == 2:
+        if shape == ct.DetectorShape.annular:
             self.shapeName.setText("Annular Mask")
+            self.firstLineLabel.setText("center x, y")
             self.secondLineLabel.setText("inner/out rad")
-        if shape == 3:
+        if shape == ct.DetectorShape.point:
             self.shapeName.setText("Point Mask")
             self.secondLineLabel.hide()
             self.secondLineText1.hide()

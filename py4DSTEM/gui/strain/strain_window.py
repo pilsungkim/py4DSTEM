@@ -22,7 +22,8 @@ class StrainMappingWindow(QtWidgets.QMainWindow):
 
 		self.strain_window = QtWidgets.QWidget()
 		self.strain_window.setWindowTitle('py4DSTEM Strain Mapping')
-
+		import qdarkstyle
+		self.strain_window.setStyleSheet(qdarkstyle.load_stylesheet())
 		self.strain_window.setGeometry(100,100,1200,800)
 		self.strain_window.show()
 

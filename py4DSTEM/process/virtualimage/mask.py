@@ -36,16 +36,21 @@ class RoiMask():
         if roiShape is None:
             self.isMerged = True
 
-
-
     def getCenter(self):
-        grid_x, grid_y = np.meshgrid(
-            np.arange(self.slice_x.start,self.slice_x.stop),
-            np.arange(self.slice_y.start,self.slice_y.stop)
+        grid_y, grid_x = np.meshgrid(
+            np.arange(self.slice_y.start,self.slice_y.stop),
+            np.arange(self.slice_x.start,self.slice_x.stop)
         )
         center_x = int(np.sum(grid_x * self.data) / np.sum(self.data))
         center_y = int(np.sum(grid_y * self.data) / np.sum(self.data))
         return center_x, center_y
+
+    def crop_to_fit_image_size(self):
+        """
+        crop mask when get out of image boundary
+        """
+        # todo
+
 
 class RoiMaskList(list):
 
@@ -72,8 +77,9 @@ class RoiMaskList(list):
     #     return rs_mask
 
     def merge(self):
+
         # create zero mask
-        zero_mask = self.create_zero_mask()
+        zero_mask = self.create_zero_mask(self)
 
         # create new masks with zero mask shape
         new_masks = [copy.deepcopy(zero_mask)] * len(self)
@@ -94,12 +100,11 @@ class RoiMaskList(list):
 
         return rs_mask
 
-
-    def create_zero_mask(self):
-        min_x = np.min([roiMask.slice_x.start for roiMask in self])
-        min_y = np.min([roiMask.slice_y.start for roiMask in self])
-        max_x = np.max([roiMask.slice_x.stop for roiMask in self])
-        max_y = np.max([roiMask.slice_y.stop for roiMask in self])
+    def create_zero_mask(self, masks):
+        min_x = np.min([roiMask.slice_x.start for roiMask in masks])
+        min_y = np.min([roiMask.slice_y.start for roiMask in masks])
+        max_x = np.max([roiMask.slice_x.stop for roiMask in masks])
+        max_y = np.max([roiMask.slice_y.stop for roiMask in masks])
         zero_maskdata = np.zeros((max_x - min_x, max_y - min_y))
         return RoiMask((slice(min_x,max_x),slice(min_y,max_y)),data=zero_maskdata)
 
@@ -129,6 +134,89 @@ class RoiMaskList(list):
         else:
             return False
 
+###############
+
+def merge(mask_list: list):
+
+    if len(mask_list) == 1:
+        return mask_list[0]
+
+    # create zero mask
+    zero_mask = create_zero_mask(mask_list)
+
+    # create new masks with zero mask shape
+    new_masks = [copy.deepcopy(zero_mask)] * len(mask_list)
+
+    # put data in new_masks
+    for roiMask, new_mask in zip(mask_list, new_masks):
+        new_mask.data[
+            roiMask.slice_x.start - zero_mask.slice_x.start:
+            roiMask.slice_x.stop - zero_mask.slice_x.start,
+            roiMask.slice_y.start - zero_mask.slice_y.start:
+            roiMask.slice_y.stop - zero_mask.slice_y.start
+            ] = roiMask.data
+
+    # merge it
+    rs_mask = copy.deepcopy(zero_mask)
+    for new_mask in new_masks:
+        rs_mask.data = np.logical_or(new_mask.data, rs_mask.data)
+
+    return rs_mask
+
+
+def create_zero_mask(masks):
+    min_x = np.min([roiMask.slice_x.start for roiMask in masks])
+    min_y = np.min([roiMask.slice_y.start for roiMask in masks])
+    max_x = np.max([roiMask.slice_x.stop for roiMask in masks])
+    max_y = np.max([roiMask.slice_y.stop for roiMask in masks])
+    zero_maskdata = np.zeros((max_x - min_x, max_y - min_y))
+    return RoiMask((slice(min_x,max_x),slice(min_y,max_y)),data=zero_maskdata)
+
+
+def isOverlapped(mask_list: list):
+    # create zero mask
+    zero_mask = create_zero_mask(mask_list)
+
+    # create new masks with zero mask shape
+    new_masks = [copy.deepcopy(zero_mask)] * len(mask_list)
+
+    # put data in new_masks
+    for roiMask, new_mask in zip(mask_list, new_masks):
+        new_mask.data[
+            roiMask.slice_x.start - zero_mask.slice_x.start:
+            roiMask.slice_x.stop - zero_mask.slice_x.start,
+            roiMask.slice_y.start - zero_mask.slice_y.start:
+            roiMask.slice_y.stop - zero_mask.slice_y.start
+            ] = roiMask.data
+
+    # merge it
+    rs_mask = copy.deepcopy(zero_mask)
+    for new_mask in new_masks:
+        rs_mask.data = np.logical_and(new_mask.data, rs_mask.data)
+
+    if np.sum(rs_mask.data) > 0:
+        return True
+    else:
+        return False
+
+def get_compound_mask_list(mask_list: list):
+
+    compound_mask = []
+
+    while len(mask_list) > 0:
+        overlappedMask = [mask_list.pop(0)]
+        for mask in mask_list:
+            if isOverlapped(overlappedMask+[mask]):
+                _mask = mask_list.pop(mask_list.index(mask))
+                overlappedMask.append(_mask)
+        compound_mask.append(merge(overlappedMask))
+
+    return compound_mask
+
+###############
+
+
+
 
 def get_circ_mask(size_x, size_y, R=1):
     rs = np.fromfunction(
@@ -139,3 +227,5 @@ def get_circ_mask(size_x, size_y, R=1):
 
 def get_annular_mask(size_x, size_y, innerR):
     return np.logical_xor(get_circ_mask(size_x, size_y), get_circ_mask(size_x, size_y, innerR))
+
+
