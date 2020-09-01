@@ -2,11 +2,13 @@
 
 import sys
 import py4DSTEM.process.utils.constants as ct
+import py4DSTEM.file.sqlite.database as database
 from PyQt5 import QtCore, QtWidgets, QtGui
 
 
 # Set global style parameters
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QMainWindow
 
 default_font = 'Times New Roman'
 
@@ -41,62 +43,72 @@ class ControlPanel(QtWidgets.QWidget):
     def __init__(self):
         QtWidgets.QWidget.__init__(self)
 
-        # Container widget        
+        # Container widget
         scrollableWidget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(self)
+        layout = QtWidgets.QHBoxLayout(self)
 
         ############## Make sub-widgets ###############
         # Provide handles to connect to their widgets #
         ###############################################
 
         ########### Preprocessing sub-widget ##########
-        self.widget_LoadPreprocessSave = HideableWidget('Load, Preprocess, Save',LoadPreprocessSaveWidget())
-        self.lineEdit_LoadFile = self.widget_LoadPreprocessSave.widget.lineEdit_LoadFile
-        self.pushButton_BrowseFiles = self.widget_LoadPreprocessSave.widget.pushButton_BrowseFiles
-        self.spinBox_Nx = self.widget_LoadPreprocessSave.widget.spinBox_Nx
-        self.spinBox_Ny = self.widget_LoadPreprocessSave.widget.spinBox_Ny
-        self.spinBox_Bin_Real = self.widget_LoadPreprocessSave.widget.spinBox_Bin_Real
-        self.spinBox_Bin_Diffraction = self.widget_LoadPreprocessSave.widget.spinBox_Bin_Diffraction
-        self.pushButton_BinData = self.widget_LoadPreprocessSave.widget.pushButton_BinData
-        self.checkBox_Crop_Real = self.widget_LoadPreprocessSave.widget.checkBox_Crop_Real
-        self.checkBox_Crop_Diffraction = self.widget_LoadPreprocessSave.widget.checkBox_Crop_Diffraction
-        self.pushButton_CropData = self.widget_LoadPreprocessSave.widget.pushButton_CropData
-        self.pushButton_EditFileMetadata = self.widget_LoadPreprocessSave.widget.pushButton_EditFileMetadata
-        self.pushButton_EditDirectoryMetadata = self.widget_LoadPreprocessSave.widget.pushButton_EditDirectoryMetadata
-        self.pushButton_SaveFile = self.widget_LoadPreprocessSave.widget.pushButton_SaveFile
-        self.pushButton_SaveDirectory = self.widget_LoadPreprocessSave.widget.pushButton_SaveDirectory
-        self.pushButton_LaunchStrain = self.widget_LoadPreprocessSave.widget.pushButton_LaunchStrain
+        # self.widget_LoadPreprocessSave = HideableWidget('Load, Preprocess, Save',LoadPreprocessSaveWidget())
+        self.preprocessingTabs = PreprocessingTabs()
+        # self.lineEdit_LoadFile = self.widget_LoadPreprocessSave.widget.lineEdit_LoadFile
+        # self.pushButton_BrowseFiles = self.widget_LoadPreprocessSave.widget.pushButton_BrowseFiles
+        self.spinBox_Nx = self.preprocessingTabs.reshapeTab.spinBox_Nx
+        self.spinBox_Ny = self.preprocessingTabs.reshapeTab.spinBox_Ny
+        self.spinBox_Bin_Real = self.preprocessingTabs.binTab.spinBox_Bin_Real
+        self.spinBox_Bin_Diffraction = self.preprocessingTabs.binTab.spinBox_Bin_Diffraction
+        self.pushButton_BinData = self.preprocessingTabs.binTab.pushButton_BinData
+        self.checkBox_Crop_Real = self.preprocessingTabs.cropTab.checkBox_Crop_Real
+        self.checkBox_Crop_Diffraction = self.preprocessingTabs.cropTab.checkBox_Crop_Diffraction
+        self.pushButton_CropData = self.preprocessingTabs.cropTab.pushButton_CropData
+        self.pushButton_EditFileMetadata = self.preprocessingTabs.editMetaTab.pushButton_EditFileMetadata
+        self.pushButton_EditDirectoryMetadata = self.preprocessingTabs.editMetaTab.pushButton_EditDirectoryMetadata
+        # self.pushButton_SaveFile = self.widget_LoadPreprocessSave.widget.pushButton_SaveFile
+        # self.pushButton_SaveDirectory = self.widget_LoadPreprocessSave.widget.pushButton_SaveDirectory
+        # self.pushButton_LaunchStrain = self.widget_LoadPreprocessSave.widget.pushButton_LaunchStrain
 
-        ########### Preprocessing sub-widget ##########
-        self.virtualDetectors = HideableWidget('Virtual Detectors',VirtualDetectorsWidget())
-        #self.virtualDetectors = HideableWidget('Virtual Detectors',VirtualDetectorsWidget(),initial_state=False)
-        self.radioButton_RectDetector = self.virtualDetectors.widget.radioButton_RectDetector
-        self.radioButton_CircDetector = self.virtualDetectors.widget.radioButton_CircDetector
-        self.radioButton_AnnularDetector = self.virtualDetectors.widget.radioButton_AnnularDetector
-        self.buttonGroup_DetectorShape = self.virtualDetectors.widget.buttonGroup_DetectorShape
-        self.radioButton_Integrate = self.virtualDetectors.widget.radioButton_Integrate
-        self.radioButton_DiffX = self.virtualDetectors.widget.radioButton_DiffX
-        self.radioButton_DiffY = self.virtualDetectors.widget.radioButton_DiffY
-        self.radioButton_CoMX = self.virtualDetectors.widget.radioButton_CoMX
-        self.radioButton_CoMY = self.virtualDetectors.widget.radioButton_CoMY
-        self.buttonGroup_DetectorMode = self.virtualDetectors.widget.buttonGroup_DetectorMode
-        self.buttonGroup_DiffractionMode = self.virtualDetectors.widget.buttonGroup_DiffractionMode
+        self.scalingTabs = ScalingTabs()
+        self.buttonGroup_DiffractionMode = self.scalingTabs.diffractionSpaceTab.buttonGroup_DiffractionMode
 
+        self.detectorModeTabs = DetectorModeTabs()
+        self.radioButton_Integrate = self.detectorModeTabs.diffractionSpaceTab.radioButton_Integrate
+        self.radioButton_DiffX = self.detectorModeTabs.diffractionSpaceTab.radioButton_DiffX
+        self.radioButton_DiffY = self.detectorModeTabs.diffractionSpaceTab.radioButton_DiffY
+        self.radioButton_CoMX = self.detectorModeTabs.diffractionSpaceTab.radioButton_CoMX
+        self.radioButton_CoMY = self.detectorModeTabs.diffractionSpaceTab.radioButton_CoMY
+        self.buttonGroup_DetectorMode = self.detectorModeTabs.diffractionSpaceTab.buttonGroup_DetectorMode
+
+        self.detectorShapeTabs = DetectorShapeTabs()
+        self.pushButton_add_Rectangular_Virtual_Aperture = self.detectorShapeTabs.diffractionSpaceTab.pushButton_RectDetector
+        self.pushButton_add_Circle_Virtual_Aperture = self.detectorShapeTabs.diffractionSpaceTab.pushButton_CircDetector
+        self.pushButton_add_Annular_Virtual_Aperture = self.detectorShapeTabs.diffractionSpaceTab.pushButton_AnnularDetector
+        self.pushButton_add_Point_Virtual_Aperture = self.detectorShapeTabs.diffractionSpaceTab.pushButton_PointDetector
+
+        self.analysisTabs = AnalysisTabs()
+        self.pushButton_LaunchStrain = self.analysisTabs.analysisTab.singleCrystal_pushbutton
         ####################################################
         ############## Create and set layout ###############
         ####################################################
 
-        layout.addWidget(self.widget_LoadPreprocessSave,0,QtCore.Qt.AlignTop)
-        layout.addWidget(self.virtualDetectors,0,QtCore.Qt.AlignTop)
+        # layout.addWidget(self.widget_LoadPreprocessSave,0,QtCore.Qt.AlignTop)
+        # layout.addWidget(self.virtualDetectors,0,QtCore.Qt.AlignTop)
+        layout.addWidget(self.preprocessingTabs,2)
+        layout.addWidget(self.scalingTabs,1)
+        layout.addWidget(self.detectorModeTabs,1)
+        layout.addWidget(self.detectorShapeTabs,2)
+        layout.addWidget(self.analysisTabs,0.5)
         layout.setSpacing(0)
         layout.setContentsMargins(0,0,0,0)
-        layout.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
+        # layout.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
         scrollableWidget.setLayout(layout)
 
         # Scroll Area Properties
         scrollArea = QtWidgets.QScrollArea()
-        scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
-        scrollArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        # scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+        # scrollArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
         scrollArea.setWidgetResizable(True)
         scrollArea.setWidget(scrollableWidget)
         scrollArea.setFrameStyle(QtWidgets.QFrame.NoFrame)
@@ -115,416 +127,322 @@ class ControlPanel(QtWidgets.QWidget):
 
 ############ Control panel sub-widgets ############
 
-class LoadPreprocessSaveWidget(QtWidgets.QWidget):
+class PreprocessingTabs(QtWidgets.QTabWidget):
     def __init__(self):
-        QtWidgets.QWidget.__init__(self)
+        QtWidgets.QTabWidget.__init__(self)
 
-        # Load
-        load_widget = QtWidgets.QWidget()
-        load_widget_layout = QtWidgets.QVBoxLayout()
+        self.reshapeTab = self.ReshapeTab()
+        self.binTab = self.BinTab()
+        self.cropTab = self.CropTab()
+        self.editMetaTab = self.EditMetaTab()
 
-        self.label_Filename = QtWidgets.QLabel("Filename")
-        self.lineEdit_LoadFile = QtWidgets.QLineEdit("")
-        self.pushButton_BrowseFiles = QtWidgets.QPushButton("Browse")
+        self.addTab(self.reshapeTab, " reshape ")
+        self.addTab(self.binTab, " bin ")
+        self.addTab(self.cropTab, " crop ")
+        self.addTab(self.editMetaTab, " metadata edit ")
 
-        self.loadRadioAuto = QtWidgets.QRadioButton("Automatic")
-        self.loadRadioAuto.setChecked(True)
-        self.loadRadioMMAP = QtWidgets.QRadioButton("DM Memory Map")
-        self.loadRadioGatan = QtWidgets.QRadioButton("Gatan K2 Binary")
-        self.loadRadioEMPAD = QtWidgets.QRadioButton("EMPAD")
+        # layout = QtWidgets.QVBoxLayout()
+        # layout.addLayout(layout_Reshape)
+        # layout.addLayout(layout_CropAndBin)
+        # layout.addLayout(layout_EditMetadata)
+        # layout.setSpacing(0)
+        # layout.setContentsMargins(0,0,0,0)
+
+        # self.setLayout(layout)
+        # self.setFixedWidth(control_panel_width)
+        # self.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed))
+
+    class ReshapeTab(QtWidgets.QWidget):
+        def __init__(self):
+            QtWidgets.QWidget.__init__(self)
+            self.spinBox_Nx = QtWidgets.QSpinBox()
+            self.spinBox_Ny = QtWidgets.QSpinBox()
+            self.spinBox_Nx.setMinimum(1)
+            self.spinBox_Ny.setMinimum(1)
+            self.spinBox_Nx.setMaximum(1000000)
+            self.spinBox_Ny.setMaximum(1000000)
+            self.label_Nx = QtWidgets.QLabel("Nx")
+            self.label_Ny = QtWidgets.QLabel("Ny")
+            self.label_Reshape = QtWidgets.QLabel("Reshape  ")
+
+            self.spinBox_Nx.setMaximumWidth(60)
+            self.spinBox_Ny.setMaximumWidth(60)
+
+            self.spinBox_Nx.setFont(normalFont)
+            self.spinBox_Ny.setFont(normalFont)
+            self.label_Nx.setFont(smallFont)
+            self.label_Ny.setFont(smallFont)
+            self.label_Reshape.setFont(normalFont)
+
+            layout_Reshape_Nx = QtWidgets.QHBoxLayout()
+            layout_Reshape_Nx.addWidget(self.label_Nx, 0, QtCore.Qt.AlignCenter)
+            layout_Reshape_Nx.addWidget(self.spinBox_Nx, 1, QtCore.Qt.AlignCenter)
+            layout_Reshape_Ny = QtWidgets.QHBoxLayout()
+            layout_Reshape_Ny.addWidget(self.label_Ny, 0, QtCore.Qt.AlignCenter)
+            layout_Reshape_Ny.addWidget(self.spinBox_Ny, 1, QtCore.Qt.AlignCenter)
+
+            layout_Reshape_N = QtWidgets.QVBoxLayout()
+            layout_Reshape_N.addLayout(layout_Reshape_Nx, 0)
+            layout_Reshape_N.addLayout(layout_Reshape_Ny, 0)
+
+            layout_Reshape = QtWidgets.QHBoxLayout()
+            layout_Reshape.addWidget(self.label_Reshape, 4, QtCore.Qt.AlignCenter)
+            layout_Reshape.addLayout(layout_Reshape_N, 5)
+            # layout_Reshape.setContentsMargins(0,0,0,13)
+            self.setLayout(layout_Reshape)
+
+    class BinTab(QtWidgets.QWidget):
+        def __init__(self):
+            QtWidgets.QWidget.__init__(self)
+            self.spinBox_Bin_Real = QtWidgets.QSpinBox()
+            self.spinBox_Bin_Diffraction = QtWidgets.QSpinBox()
+            self.spinBox_Bin_Real.setMaximum(1000)
+            self.spinBox_Bin_Diffraction.setMaximum(1000)
+            self.pushButton_BinData = QtWidgets.QPushButton("Bin")
+
+            self.spinBox_Bin_Real.setFont(normalFont)
+            self.spinBox_Bin_Diffraction.setFont(normalFont)
+            self.label_Bin_Q = QtWidgets.QLabel("Q ")
+            self.label_Bin_R = QtWidgets.QLabel("R ")
+            self.label_Bin_Q.setFont(smallFont)
+            self.label_Bin_R.setFont(smallFont)
+            self.pushButton_BinData.setFont(normalFont)
+
+            layout_Bin_Diffraction = QtWidgets.QHBoxLayout()
+            layout_Bin_Diffraction.addWidget(self.label_Bin_Q, 0, QtCore.Qt.AlignCenter)
+            layout_Bin_Diffraction.addWidget(self.spinBox_Bin_Diffraction, 0, QtCore.Qt.AlignCenter)
+            layout_Bin_Real = QtWidgets.QHBoxLayout()
+            layout_Bin_Real.addWidget(self.label_Bin_R, 0, QtCore.Qt.AlignCenter)
+            layout_Bin_Real.addWidget(self.spinBox_Bin_Real, 0, QtCore.Qt.AlignCenter)
+
+            layout_Bin_SpinBoxes = QtWidgets.QVBoxLayout()
+            layout_Bin_SpinBoxes.addLayout(layout_Bin_Diffraction)
+            layout_Bin_SpinBoxes.addLayout(layout_Bin_Real)
+
+            layout_Bin = QtWidgets.QHBoxLayout()
+            layout_Bin.addLayout(layout_Bin_SpinBoxes, 2)
+            layout_Bin.addWidget(self.pushButton_BinData, 1, QtCore.Qt.AlignCenter)
+            # layout_Bin.setContentsMargins(10,0,0,0)
+            self.setLayout(layout_Bin)
+
+    class CropTab(QtWidgets.QWidget):
+        def __init__(self):
+            QtWidgets.QWidget.__init__(self)
+            self.checkBox_Crop_Real = QtWidgets.QCheckBox()
+            self.checkBox_Crop_Diffraction = QtWidgets.QCheckBox()
+            self.pushButton_CropData = QtWidgets.QPushButton("Crop")
+            self.label_Crop_Q = QtWidgets.QLabel("Q ")
+            self.label_Crop_R = QtWidgets.QLabel("R ")
+
+            self.pushButton_CropData.setFont(normalFont)
+            self.label_Crop_Q.setFont(smallFont)
+            self.label_Crop_R.setFont(smallFont)
+
+            layout_Crop_Diffraction = QtWidgets.QHBoxLayout()
+            layout_Crop_Diffraction.addWidget(self.label_Crop_Q, 0, QtCore.Qt.AlignCenter)
+            layout_Crop_Diffraction.addWidget(self.checkBox_Crop_Diffraction, 0, QtCore.Qt.AlignCenter)
+            layout_Crop_Real = QtWidgets.QHBoxLayout()
+            layout_Crop_Real.addWidget(self.label_Crop_R, 0, QtCore.Qt.AlignCenter)
+            layout_Crop_Real.addWidget(self.checkBox_Crop_Real, 0, QtCore.Qt.AlignCenter)
+
+            layout_Crop_CheckBoxes = QtWidgets.QVBoxLayout()
+            layout_Crop_CheckBoxes.addLayout(layout_Crop_Diffraction)
+            layout_Crop_CheckBoxes.addLayout(layout_Crop_Real)
+
+            layout_Crop = QtWidgets.QHBoxLayout()
+            layout_Crop.addLayout(layout_Crop_CheckBoxes)
+            layout_Crop.addWidget(self.pushButton_CropData,alignment=QtCore.Qt.AlignCenter)
+            layout_Crop.setSpacing(0)
+            # layout_Crop.setContentsMargins(0,0,10,0)
+            self.setLayout(layout_Crop)
+
+    class EditMetaTab(QtWidgets.QWidget):
+        def __init__(self):
+            QtWidgets.QWidget.__init__(self)
+            self.pushButton_EditFileMetadata = QtWidgets.QPushButton("File")
+            self.pushButton_EditDirectoryMetadata = QtWidgets.QPushButton("Directory")
+            self.label_EditMetadata = QtWidgets.QLabel("Edit Metadata")
+
+            self.pushButton_EditFileMetadata.setMaximumWidth(80)
+            self.pushButton_EditDirectoryMetadata.setMaximumWidth(100)
+
+            self.pushButton_EditFileMetadata.setFont(normalFont)
+            self.pushButton_EditDirectoryMetadata.setFont(normalFont)
+            self.label_EditMetadata.setFont(normalFont)
+
+            layout_EditMetadata_Buttons = QtWidgets.QHBoxLayout()
+            layout_EditMetadata_Buttons.addWidget(self.pushButton_EditDirectoryMetadata)
+            layout_EditMetadata_Buttons.addWidget(self.pushButton_EditFileMetadata)
+
+            layout_EditMetadata = QtWidgets.QVBoxLayout()
+            layout_EditMetadata.addWidget(self.label_EditMetadata, 1, alignment=QtCore.Qt.AlignCenter)
+            layout_EditMetadata.addLayout(layout_EditMetadata_Buttons, 1)
+
+            self.setLayout(layout_EditMetadata)
 
 
-        self.label_Filename.setFont(normalFont)
-        self.lineEdit_LoadFile.setFont(normalFont)
-        self.pushButton_BrowseFiles.setFont(normalFont)
-
-        line1 = QtWidgets.QHBoxLayout()
-        line1.addWidget(self.label_Filename,stretch=0)
-        line1.addWidget(self.lineEdit_LoadFile,stretch=1)
-        optionLine = QtWidgets.QHBoxLayout()
-        optionLine.addWidget(self.loadRadioAuto)
-        optionLine.addWidget(self.loadRadioMMAP)
-        optionLine.addWidget(self.loadRadioGatan)
-        optionLine.addWidget(self.loadRadioEMPAD)
-
-        line2 = QtWidgets.QHBoxLayout()
-        line2.addWidget(self.pushButton_BrowseFiles,0,QtCore.Qt.AlignRight)
-
-        load_widget_layout.addLayout(line1)
-        load_widget_layout.addLayout(optionLine)
-        load_widget_layout.addLayout(line2)
-        load_widget_layout.setSpacing(0)
-        load_widget_layout.setContentsMargins(0,0,0,0)
-        load_widget.setLayout(load_widget_layout)
-
-        # Preprocess
-        preprocess_widget = PreprocessingWidget()
-        self.spinBox_Nx = preprocess_widget.spinBox_Nx
-        self.spinBox_Ny = preprocess_widget.spinBox_Ny
-        self.spinBox_Bin_Real = preprocess_widget.spinBox_Bin_Real
-        self.spinBox_Bin_Diffraction = preprocess_widget.spinBox_Bin_Diffraction
-        self.pushButton_BinData = preprocess_widget.pushButton_BinData
-        self.checkBox_Crop_Real = preprocess_widget.checkBox_Crop_Real
-        self.checkBox_Crop_Diffraction = preprocess_widget.checkBox_Crop_Diffraction
-        self.pushButton_CropData = preprocess_widget.pushButton_CropData
-        self.pushButton_EditFileMetadata = preprocess_widget.pushButton_EditFileMetadata
-        self.pushButton_EditDirectoryMetadata = preprocess_widget.pushButton_EditDirectoryMetadata
-
-        # Save
-        save_widget = QtWidgets.QWidget()
-        save_widget_layout = QtWidgets.QHBoxLayout()
-
-        self.pushButton_SaveFile = QtWidgets.QPushButton("File")
-        self.pushButton_SaveDirectory = QtWidgets.QPushButton("Directory")
-
-        self.pushButton_SaveFile.setMaximumWidth(80)
-        self.pushButton_SaveDirectory.setMaximumWidth(100)
-
-        self.pushButton_SaveFile.setFont(normalFont)
-        self.pushButton_SaveDirectory.setFont(normalFont)
-
-        save_widget_layout.addWidget(self.pushButton_SaveDirectory)
-        save_widget_layout.addWidget(self.pushButton_SaveFile)
-        save_widget.setLayout(save_widget_layout)
-
-        analysis_widget = QtWidgets.QWidget()
-        analysis_widget_layout = QtWidgets.QHBoxLayout()
-        self.pushButton_LaunchStrain = QtWidgets.QPushButton('Single Crystal Strain')
-        self.pushButton_LaunchStrain.setMaximumWidth(200)
-        analysis_widget_layout.addWidget(self.pushButton_LaunchStrain)
-        analysis_widget.setLayout(analysis_widget_layout)
-
-        # Layout
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(SectionLabel('Load'))
-        layout.addWidget(load_widget)
-        layout.addWidget(SectionLabel('Preprocess'))
-        layout.addWidget(preprocess_widget)
-        layout.addWidget(SectionLabel('Save'))
-        layout.addWidget(save_widget)
-        layout.addWidget(SectionLabel('Analysis'))
-        layout.addWidget(analysis_widget)
-        layout.setSpacing(0)
-        layout.setContentsMargins(0,0,0,0)
-        self.setLayout(layout)
-        self.setFixedWidth(control_panel_width)
-        self.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed))
-
-class PreprocessingWidget(QtWidgets.QWidget):
+class ScalingTabs(QtWidgets.QTabWidget):
     def __init__(self):
-        QtWidgets.QWidget.__init__(self)
+        QtWidgets.QTabWidget.__init__(self)
 
-        # Reshape
-        self.spinBox_Nx = QtWidgets.QSpinBox()
-        self.spinBox_Ny = QtWidgets.QSpinBox()
-        self.spinBox_Nx.setMinimum(1)
-        self.spinBox_Ny.setMinimum(1)
-        self.spinBox_Nx.setMaximum(1000000)
-        self.spinBox_Ny.setMaximum(1000000)
-        self.label_Nx = QtWidgets.QLabel("Nx")
-        self.label_Ny = QtWidgets.QLabel("Ny")
-        self.label_Reshape = QtWidgets.QLabel("Reshape  ")
+        self.diffractionSpaceTab = self.DiffractionSpaceTab()
 
-        self.spinBox_Nx.setMaximumWidth(60)
-        self.spinBox_Ny.setMaximumWidth(60)
+        self.addTab(self.diffractionSpaceTab, " Diffraction Space ")
 
-        self.spinBox_Nx.setFont(normalFont)
-        self.spinBox_Ny.setFont(normalFont)
-        self.label_Nx.setFont(smallFont)
-        self.label_Ny.setFont(smallFont)
-        self.label_Reshape.setFont(normalFont)
+    class DiffractionSpaceTab(QtWidgets.QWidget):
+        def __init__(self):
+            QtWidgets.QWidget.__init__(self)
+            diffraction_mode_widget_layout = QtWidgets.QVBoxLayout()
 
-        layout_Reshape_Nx = QtWidgets.QHBoxLayout()
-        layout_Reshape_Nx.addWidget(self.label_Nx,0,QtCore.Qt.AlignLeft)
-        layout_Reshape_Nx.addWidget(self.spinBox_Nx,1,QtCore.Qt.AlignLeft)
-        layout_Reshape_Ny = QtWidgets.QHBoxLayout()
-        layout_Reshape_Ny.addWidget(self.label_Ny,0,QtCore.Qt.AlignLeft)
-        layout_Reshape_Ny.addWidget(self.spinBox_Ny,1,QtCore.Qt.AlignLeft)
+            self.radioButton_DP_Raw = QtWidgets.QRadioButton('Raw')
+            self.radioButton_DP_Sqrt = QtWidgets.QRadioButton('Square Root')
+            self.radioButton_DP_Log = QtWidgets.QRadioButton('Logartihm')
+            self.radioButton_DP_EWPC = QtWidgets.QRadioButton('EWPC')
 
-        layout_Reshape_N = QtWidgets.QVBoxLayout()
-        layout_Reshape_N.addLayout(layout_Reshape_Nx,0)
-        layout_Reshape_N.addLayout(layout_Reshape_Ny,0)
+            diffraction_mode_widget_layout.addWidget(self.radioButton_DP_Raw)
+            diffraction_mode_widget_layout.addWidget(self.radioButton_DP_Sqrt)
+            diffraction_mode_widget_layout.addWidget(self.radioButton_DP_Log)
+            diffraction_mode_widget_layout.addWidget(self.radioButton_DP_EWPC)
 
-        layout_Reshape = QtWidgets.QHBoxLayout()
-        layout_Reshape.addWidget(self.label_Reshape,4,QtCore.Qt.AlignRight)
-        layout_Reshape.addLayout(layout_Reshape_N,5)
-        layout_Reshape.setContentsMargins(0,0,0,13)
+            self.buttonGroup_DiffractionMode = QtWidgets.QButtonGroup()
+            self.buttonGroup_DiffractionMode.addButton(self.radioButton_DP_Raw)
+            self.buttonGroup_DiffractionMode.addButton(self.radioButton_DP_Sqrt)
+            self.buttonGroup_DiffractionMode.addButton(self.radioButton_DP_Log)
+            self.buttonGroup_DiffractionMode.addButton(self.radioButton_DP_EWPC)
 
-        # Bin
-        self.spinBox_Bin_Real = QtWidgets.QSpinBox()
-        self.spinBox_Bin_Diffraction = QtWidgets.QSpinBox()
-        self.spinBox_Bin_Real.setMaximum(1000)
-        self.spinBox_Bin_Diffraction.setMaximum(1000)
-        self.pushButton_BinData = QtWidgets.QPushButton("Bin")
+            self.buttonGroup_DiffractionMode.setId(self.radioButton_DP_Raw, 0)
+            self.buttonGroup_DiffractionMode.setId(self.radioButton_DP_Sqrt, 1)
+            self.buttonGroup_DiffractionMode.setId(self.radioButton_DP_Log, 2)
+            self.buttonGroup_DiffractionMode.setId(self.radioButton_DP_EWPC, 3)
 
-        self.spinBox_Bin_Real.setFont(normalFont)
-        self.spinBox_Bin_Diffraction.setFont(normalFont)
-        self.label_Bin_Q = QtWidgets.QLabel("Q ")
-        self.label_Bin_R = QtWidgets.QLabel("R ")
-        self.label_Bin_Q.setFont(smallFont)
-        self.label_Bin_R.setFont(smallFont)
-        self.pushButton_BinData.setFont(normalFont)
-
-        layout_Bin_Diffraction = QtWidgets.QHBoxLayout()
-        layout_Bin_Diffraction.addWidget(self.label_Bin_Q,0,QtCore.Qt.AlignRight)
-        layout_Bin_Diffraction.addWidget(self.spinBox_Bin_Diffraction,0,QtCore.Qt.AlignCenter)
-        layout_Bin_Real = QtWidgets.QHBoxLayout()
-        layout_Bin_Real.addWidget(self.label_Bin_R,0,QtCore.Qt.AlignRight)
-        layout_Bin_Real.addWidget(self.spinBox_Bin_Real,0,QtCore.Qt.AlignCenter)
-
-        layout_Bin_SpinBoxes = QtWidgets.QVBoxLayout()
-        layout_Bin_SpinBoxes.addLayout(layout_Bin_Diffraction)
-        layout_Bin_SpinBoxes.addLayout(layout_Bin_Real)
-
-        layout_Bin = QtWidgets.QHBoxLayout()
-        layout_Bin.addLayout(layout_Bin_SpinBoxes,2)
-        layout_Bin.addWidget(self.pushButton_BinData,1,QtCore.Qt.AlignCenter)
-        layout_Bin.setContentsMargins(10,0,0,0)
-
-        # Crop
-        self.checkBox_Crop_Real = QtWidgets.QCheckBox()
-        self.checkBox_Crop_Diffraction = QtWidgets.QCheckBox()
-        self.pushButton_CropData = QtWidgets.QPushButton("Crop")
-        self.label_Crop_Q = QtWidgets.QLabel("Q ")
-        self.label_Crop_R = QtWidgets.QLabel("R ")
-
-        self.pushButton_CropData.setFont(normalFont)
-        self.label_Crop_Q.setFont(smallFont)
-        self.label_Crop_R.setFont(smallFont)
-
-        layout_Crop_Diffraction = QtWidgets.QHBoxLayout()
-        layout_Crop_Diffraction.addWidget(self.label_Crop_Q,1,QtCore.Qt.AlignRight)
-        layout_Crop_Diffraction.addWidget(self.checkBox_Crop_Diffraction,0,QtCore.Qt.AlignRight)
-        layout_Crop_Real = QtWidgets.QHBoxLayout()
-        layout_Crop_Real.addWidget(self.label_Crop_R,1,QtCore.Qt.AlignRight)
-        layout_Crop_Real.addWidget(self.checkBox_Crop_Real,0,QtCore.Qt.AlignRight)
-
-        layout_Crop_CheckBoxes = QtWidgets.QVBoxLayout()
-        layout_Crop_CheckBoxes.addLayout(layout_Crop_Diffraction)
-        layout_Crop_CheckBoxes.addLayout(layout_Crop_Real)
-
-        layout_Crop = QtWidgets.QHBoxLayout()
-        layout_Crop.addLayout(layout_Crop_CheckBoxes,4)
-        layout_Crop.addWidget(self.pushButton_CropData,1,QtCore.Qt.AlignLeft)
-        layout_Crop.setSpacing(0)
-        layout_Crop.setContentsMargins(0,0,10,0)
-
-        # Crop and Bin
-
-        layout_CropAndBin = QtWidgets.QHBoxLayout()
-        layout_CropAndBin.addLayout(layout_Crop)
-        layout_CropAndBin.addLayout(layout_Bin)
-        layout_CropAndBin.setContentsMargins(0,0,0,6)
-
-        # Edit Metadata
-        self.pushButton_EditFileMetadata = QtWidgets.QPushButton("File")
-        self.pushButton_EditDirectoryMetadata = QtWidgets.QPushButton("Directory")
-        self.label_EditMetadata = QtWidgets.QLabel("Edit Metadata")
-
-        self.pushButton_EditFileMetadata.setMaximumWidth(80)
-        self.pushButton_EditDirectoryMetadata.setMaximumWidth(100)
-
-        self.pushButton_EditFileMetadata.setFont(normalFont)
-        self.pushButton_EditDirectoryMetadata.setFont(normalFont)
-        self.label_EditMetadata.setFont(normalFont)
-
-        layout_EditMetadata_Buttons = QtWidgets.QHBoxLayout()
-        layout_EditMetadata_Buttons.addWidget(self.pushButton_EditDirectoryMetadata)
-        layout_EditMetadata_Buttons.addWidget(self.pushButton_EditFileMetadata)
-
-        layout_EditMetadata = QtWidgets.QVBoxLayout()
-        layout_EditMetadata.addWidget(self.label_EditMetadata,0,QtCore.Qt.AlignCenter)
-        layout_EditMetadata.addLayout(layout_EditMetadata_Buttons)
-
-        # Layout
-        layout = QtWidgets.QVBoxLayout()
-        layout.addLayout(layout_Reshape)
-        layout.addLayout(layout_CropAndBin)
-        layout.addLayout(layout_EditMetadata)
-        layout.setSpacing(0)
-        layout.setContentsMargins(0,0,0,0)
-
-        self.setLayout(layout)
-        self.setFixedWidth(control_panel_width)
-        self.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed))
+            self.setLayout(diffraction_mode_widget_layout)
 
 
-class VirtualDetectorsWidget(QtWidgets.QWidget):
+class DetectorModeTabs(QtWidgets.QTabWidget):
     def __init__(self):
-        """
-        Virtual detector shapes and modes are assigned integers IDs to connect the radio buttons
-        with the appropriate functions, as follows:
+        QtWidgets.QTabWidget.__init__(self)
 
-        Shapes:
-            1: Rectangular
-            2: Circular
-            3: Annular
-        Modes:
-            1: Integrate
-            2: CoM
-            3: Difference, X
-            4: Difference, Y
-        """
+        self.diffractionSpaceTab = self.DiffractionSpaceTab()
 
-        QtWidgets.QWidget.__init__(self)
+        self.addTab(self.diffractionSpaceTab, " Diffraction Space ")
 
-        # Detector shape
-        detector_shape_widget = QtWidgets.QWidget()
-        detector_shape_widget_layout = QtWidgets.QHBoxLayout()
+    class DiffractionSpaceTab(QtWidgets.QWidget):
+        def __init__(self):
+            QtWidgets.QWidget.__init__(self)
+            # Detector mode
+            detector_mode_widget = QtWidgets.QWidget()
+            detector_mode_widget_layout = QtWidgets.QVBoxLayout()
 
-        self.radioButton_RectDetector = QtWidgets.QRadioButton('Rectangular')
-        self.radioButton_CircDetector = QtWidgets.QRadioButton('Circular')
-        self.radioButton_AnnularDetector = QtWidgets.QRadioButton('Annular')
-        self.radioButton_PointDetector = QtWidgets.QRadioButton('Pick')
+            self.radioButton_Integrate = QtWidgets.QRadioButton('Integrate')
+            self.radioButton_DiffX = QtWidgets.QRadioButton('Difference, X')
+            self.radioButton_DiffY = QtWidgets.QRadioButton('Difference, Y')
+            self.radioButton_CoMX = QtWidgets.QRadioButton('Center of Mass, X')
+            self.radioButton_CoMY = QtWidgets.QRadioButton('Center of Mass, Y')
 
-        self.radioButton_RectDetector.setFont(normalFont)
-        self.radioButton_CircDetector.setFont(normalFont)
-        self.radioButton_AnnularDetector.setFont(normalFont)
-        self.radioButton_PointDetector.setFont(normalFont)
+            self.radioButton_Integrate.setFont(normalFont)
+            self.radioButton_DiffX.setFont(normalFont)
+            self.radioButton_DiffY.setFont(normalFont)
+            self.radioButton_CoMX.setFont(normalFont)
+            self.radioButton_CoMY.setFont(normalFont)
 
-        detector_shape_widget_layout.addWidget(self.radioButton_RectDetector)
-        detector_shape_widget_layout.addWidget(self.radioButton_CircDetector)
-        detector_shape_widget_layout.addWidget(self.radioButton_AnnularDetector)
-        detector_shape_widget_layout.addWidget(self.radioButton_PointDetector)
-        detector_shape_widget.setLayout(detector_shape_widget_layout)
+            detector_mode_widget_layout.addWidget(self.radioButton_Integrate)
+            detector_mode_widget_layout.addWidget(self.radioButton_DiffX)
+            detector_mode_widget_layout.addWidget(self.radioButton_DiffY)
+            detector_mode_widget_layout.addWidget(self.radioButton_CoMX)
+            detector_mode_widget_layout.addWidget(self.radioButton_CoMY)
+            # detector_mode_widget.setLayout(detector_mode_widget_layout)
 
-        # Create detector shape button group
-        self.buttonGroup_DetectorShape = QtWidgets.QButtonGroup()
-        self.buttonGroup_DetectorShape.addButton(self.radioButton_RectDetector)
-        self.buttonGroup_DetectorShape.addButton(self.radioButton_CircDetector)
-        self.buttonGroup_DetectorShape.addButton(self.radioButton_AnnularDetector)
-        self.buttonGroup_DetectorShape.addButton(self.radioButton_PointDetector)
+            # Create detector mode button group
+            self.buttonGroup_DetectorMode = QtWidgets.QButtonGroup()
+            self.buttonGroup_DetectorMode.addButton(self.radioButton_Integrate)
+            self.buttonGroup_DetectorMode.addButton(self.radioButton_DiffX)
+            self.buttonGroup_DetectorMode.addButton(self.radioButton_DiffY)
+            self.buttonGroup_DetectorMode.addButton(self.radioButton_CoMX)
+            self.buttonGroup_DetectorMode.addButton(self.radioButton_CoMY)
 
-        self.buttonGroup_DetectorShape.setId(self.radioButton_RectDetector, 0)
-        self.buttonGroup_DetectorShape.setId(self.radioButton_CircDetector, 1)
-        self.buttonGroup_DetectorShape.setId(self.radioButton_AnnularDetector, 2)
-        self.buttonGroup_DetectorShape.setId(self.radioButton_PointDetector, 3)
-        ################################NEW#################################
-        add_detector_shape_button_group_widget = QtWidgets.QWidget()
-        detector_shape_button_widget_layout = QtWidgets.QHBoxLayout()
-        self.pushButton_RectDetector = QtWidgets.QPushButton('Rectangular')
-        self.pushButton_CircDetector = QtWidgets.QPushButton('Circular')
-        self.pushButton_AnnularDetector = QtWidgets.QPushButton('Annular')
-        self.pushButton_PointDetector = QtWidgets.QPushButton('Pick')
-        self.pushButton_RectDetector.setFont(normalFont)
-        self.pushButton_CircDetector.setFont(normalFont)
-        self.pushButton_AnnularDetector.setFont(normalFont)
-        self.pushButton_PointDetector.setFont(normalFont)
-        detector_shape_button_widget_layout.addWidget(self.pushButton_RectDetector)
-        detector_shape_button_widget_layout.addWidget(self.pushButton_CircDetector)
-        detector_shape_button_widget_layout.addWidget(self.pushButton_AnnularDetector)
-        detector_shape_button_widget_layout.addWidget(self.pushButton_PointDetector)
-        add_detector_shape_button_group_widget.setLayout(detector_shape_button_widget_layout)
+            self.buttonGroup_DetectorMode.setId(self.radioButton_Integrate, ct.DetectorModeType.integrate)
+            self.buttonGroup_DetectorMode.setId(self.radioButton_DiffX, ct.DetectorModeType.diffX)
+            self.buttonGroup_DetectorMode.setId(self.radioButton_DiffY, ct.DetectorModeType.diffY)
+            self.buttonGroup_DetectorMode.setId(self.radioButton_CoMX, ct.DetectorModeType.CoMX)
+            self.buttonGroup_DetectorMode.setId(self.radioButton_CoMY, ct.DetectorModeType.CoMY)
 
-        detector_shape_group_widget = QtWidgets.QWidget()
-        self.detector_shape_group_widget_layout = QtWidgets.QVBoxLayout()
-        self.detector_shape_group_widget_layout.setContentsMargins(0,20,0,20)
-        detector_shape_group_widget.setLayout(self.detector_shape_group_widget_layout)
-        #######################################################################
+            self.setLayout(detector_mode_widget_layout)
 
-        # Detector mode
-        detector_mode_widget = QtWidgets.QWidget()
-        detector_mode_widget_layout = QtWidgets.QVBoxLayout()
 
-        self.radioButton_Integrate = QtWidgets.QRadioButton('Integrate')
-        self.radioButton_DiffX = QtWidgets.QRadioButton('Difference, X')
-        self.radioButton_DiffY = QtWidgets.QRadioButton('Difference, Y')
-        self.radioButton_CoMX = QtWidgets.QRadioButton('Center of Mass, X')
-        self.radioButton_CoMY = QtWidgets.QRadioButton('Center of Mass, Y')
+class DetectorShapeTabs(QtWidgets.QTabWidget):
+    def __init__(self):
+        QtWidgets.QTabWidget.__init__(self)
 
-        self.radioButton_Integrate.setFont(normalFont)
-        self.radioButton_DiffX.setFont(normalFont)
-        self.radioButton_DiffY.setFont(normalFont)
-        self.radioButton_CoMX.setFont(normalFont)
-        self.radioButton_CoMY.setFont(normalFont)
+        self.diffractionSpaceTab = self.DiffractionSpaceTab()
 
-        detector_mode_widget_layout.addWidget(self.radioButton_Integrate)
-        detector_mode_widget_layout.addWidget(self.radioButton_DiffX)
-        detector_mode_widget_layout.addWidget(self.radioButton_DiffY)
-        detector_mode_widget_layout.addWidget(self.radioButton_CoMX)
-        detector_mode_widget_layout.addWidget(self.radioButton_CoMY)
-        detector_mode_widget.setLayout(detector_mode_widget_layout)
+        self.addTab(self.diffractionSpaceTab, "Diffraction Space")
 
-        # Create detector mode button group
-        self.buttonGroup_DetectorMode = QtWidgets.QButtonGroup()
-        self.buttonGroup_DetectorMode.addButton(self.radioButton_Integrate)
-        self.buttonGroup_DetectorMode.addButton(self.radioButton_DiffX)
-        self.buttonGroup_DetectorMode.addButton(self.radioButton_DiffY)
-        self.buttonGroup_DetectorMode.addButton(self.radioButton_CoMX)
-        self.buttonGroup_DetectorMode.addButton(self.radioButton_CoMY)
+    class DiffractionSpaceTab(QtWidgets.QWidget):
+        def __init__(self):
+            QtWidgets.QWidget.__init__(self)
+            detector_shape_button_group = QtWidgets.QWidget()
+            detector_shape_button_layout = QtWidgets.QHBoxLayout()
+            self.pushButton_RectDetector = QtWidgets.QPushButton('Rectangular')
+            self.pushButton_CircDetector = QtWidgets.QPushButton('Circular')
+            self.pushButton_AnnularDetector = QtWidgets.QPushButton('Annular')
+            self.pushButton_PointDetector = QtWidgets.QPushButton('Pick')
+            self.pushButton_RectDetector.setFont(normalFont)
+            self.pushButton_CircDetector.setFont(normalFont)
+            self.pushButton_AnnularDetector.setFont(normalFont)
+            self.pushButton_PointDetector.setFont(normalFont)
+            detector_shape_button_layout.addWidget(self.pushButton_RectDetector)
+            detector_shape_button_layout.addWidget(self.pushButton_CircDetector)
+            detector_shape_button_layout.addWidget(self.pushButton_AnnularDetector)
+            detector_shape_button_layout.addWidget(self.pushButton_PointDetector)
+            detector_shape_button_group.setLayout(detector_shape_button_layout)
 
-        self.buttonGroup_DetectorMode.setId(self.radioButton_Integrate, ct.DetectorModeType.integrate)
-        self.buttonGroup_DetectorMode.setId(self.radioButton_DiffX, ct.DetectorModeType.diffX)
-        self.buttonGroup_DetectorMode.setId(self.radioButton_DiffY, ct.DetectorModeType.diffY)
-        self.buttonGroup_DetectorMode.setId(self.radioButton_CoMX, ct.DetectorModeType.CoMX)
-        self.buttonGroup_DetectorMode.setId(self.radioButton_CoMY, ct.DetectorModeType.CoMY)
 
-        # Diffraction Scaling Control
-        diffraction_mode_widget = QtWidgets.QWidget()
-        diffraction_mode_widget_layout = QtWidgets.QVBoxLayout()
 
-        self.radioButton_DP_Raw = QtWidgets.QRadioButton('Raw')
-        self.radioButton_DP_Sqrt = QtWidgets.QRadioButton('Square Root')
-        self.radioButton_DP_Log = QtWidgets.QRadioButton('Logartihm')
-        self.radioButton_DP_EWPC = QtWidgets.QRadioButton('EWPC')
+            self.detector_shape_group = QtWidgets.QWidget()
+            self.detector_shape_group_widget_layout = QtWidgets.QVBoxLayout()
+            self.detector_shape_group.setLayout(self.detector_shape_group_widget_layout)
+            # self.detector_shape_group_widget_layout.setContentsMargins(0, 20, 0, 20)
+            self.detector_shape_group_widget_layout.addStretch(0)
+            # Scroll Widget
+            self.detector_shape_group_scrollable = QtWidgets.QWidget()
+            self.detector_shape_group_scrollable.layout = QtWidgets.QVBoxLayout()
+            self.detector_shape_group_scrollable.layout.addWidget(self.detector_shape_group)
+            self.detector_shape_group_scrollable.setLayout(self.detector_shape_group_scrollable.layout)
 
-        diffraction_mode_widget_layout.addWidget(self.radioButton_DP_Raw)
-        diffraction_mode_widget_layout.addWidget(self.radioButton_DP_Sqrt)
-        diffraction_mode_widget_layout.addWidget(self.radioButton_DP_Log)
-        diffraction_mode_widget_layout.addWidget(self.radioButton_DP_EWPC)
-        diffraction_mode_widget.setLayout(diffraction_mode_widget_layout)
+            # Scroll Area Properties
+            scrollArea = QtWidgets.QScrollArea()
+            # scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+            # scrollArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+            scrollArea.setWidgetResizable(True)
+            scrollArea.setWidget(self.detector_shape_group)
+            scrollArea.setFrameStyle(QtWidgets.QFrame.NoFrame)
+            scrollArea.setContentsMargins(0,0,0,0)
 
-        self.buttonGroup_DiffractionMode = QtWidgets.QButtonGroup()
-        self.buttonGroup_DiffractionMode.addButton(self.radioButton_DP_Raw)
-        self.buttonGroup_DiffractionMode.addButton(self.radioButton_DP_Sqrt)
-        self.buttonGroup_DiffractionMode.addButton(self.radioButton_DP_Log)
-        self.buttonGroup_DiffractionMode.addButton(self.radioButton_DP_EWPC)
 
-        self.buttonGroup_DiffractionMode.setId(self.radioButton_DP_Raw, 0)
-        self.buttonGroup_DiffractionMode.setId(self.radioButton_DP_Sqrt, 1)
-        self.buttonGroup_DiffractionMode.setId(self.radioButton_DP_Log, 2)
-        self.buttonGroup_DiffractionMode.setId(self.radioButton_DP_EWPC, 3)
 
-        # Arrowkey Control
-        arrowkey_widget = QtWidgets.QWidget()
-        arrowkey_widget_layout = QtWidgets.QVBoxLayout()
+            self.layout = QtWidgets.QVBoxLayout()
+            self.layout.addWidget(detector_shape_button_group)
+            self.layout.addWidget(scrollArea)
+            self.setLayout(self.layout)
+            self.layout.setSpacing(0)
+            self.layout.setContentsMargins(0,0,0,0)
 
-        self.radioButton_ArrowkeyRS = QtWidgets.QRadioButton('Real Space')
-        self.radioButton_ArrowkeyDP = QtWidgets.QRadioButton('Diffraction')
-        self.radioButton_ArrowkeyOff = QtWidgets.QRadioButton('None')
-        self.radioButton_ArrowkeyOff.setChecked(True)
 
-        arrowkey_widget_layout.addWidget(self.radioButton_ArrowkeyRS)
-        arrowkey_widget_layout.addWidget(self.radioButton_ArrowkeyDP)
-        arrowkey_widget_layout.addWidget(self.radioButton_ArrowkeyOff)
-        arrowkey_widget.setLayout(arrowkey_widget_layout)
+class AnalysisTabs(QtWidgets.QTabWidget):
+    def __init__(self):
+        QtWidgets.QTabWidget.__init__(self)
 
-        self.buttonGroup_ArrowkeyMode = QtWidgets.QButtonGroup()
-        self.buttonGroup_ArrowkeyMode.addButton(self.radioButton_ArrowkeyRS)
-        self.buttonGroup_ArrowkeyMode.addButton(self.radioButton_ArrowkeyDP)
-        self.buttonGroup_ArrowkeyMode.addButton(self.radioButton_ArrowkeyOff)
+        self.analysisTab = self.AnalysisTab()
 
-        self.buttonGroup_ArrowkeyMode.setId(self.radioButton_ArrowkeyRS,0)
-        self.buttonGroup_ArrowkeyMode.setId(self.radioButton_ArrowkeyDP,1)
-        self.buttonGroup_ArrowkeyMode.setId(self.radioButton_ArrowkeyOff,2)
+        self.addTab(self.analysisTab, "analysis")
 
-        # Layout
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(SectionLabel('Detector Shape'))
-        # layout.addWidget(detector_shape_widget)
-        layout.addWidget(add_detector_shape_button_group_widget)
-        layout.addWidget(detector_shape_group_widget)
-        layout.addWidget(SectionLabel('Detector Mode'))
-        layout.addWidget(detector_mode_widget)
-        layout.addWidget(SectionLabel('Diffraction Pattern Scaling'))
-        layout.addWidget(diffraction_mode_widget)
-        layout.addWidget(SectionLabel('Arrowkey Control'))
-        layout.addWidget(arrowkey_widget)
-        layout.setSpacing(0)
-        layout.setContentsMargins(0,0,0,0)
-        self.setLayout(layout)
-        self.setFixedWidth(control_panel_width)
-        self.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed))
+    class AnalysisTab(QtWidgets.QWidget):
+        def __init__(self):
+            QtWidgets.QWidget.__init__(self)
+            self.layout = QtWidgets.QHBoxLayout()
+            self.setLayout(self.layout)
+            self.singleCrystal_pushbutton = QtWidgets.QPushButton("Single Crystal")
+            self.layout.addWidget(self.singleCrystal_pushbutton)
 
 
 
@@ -532,14 +450,16 @@ class DetectorShapeWidget(QtWidgets.QWidget):
     def __init__(self, shape:str):
         super().__init__()
         self.keyEvent_list = []
+        self.enterEvent_list = []
+        self.leaveEvent_list = []
         self.frame = QtWidgets.QFrame()
         self.frame_layout = QtWidgets.QVBoxLayout()
         self.frame.setLayout(self.frame_layout)
         self.frame_layout.setSpacing(0)
-        self.frame_layout.setContentsMargins(10,10,10,10)
+        self.frame_layout.setContentsMargins(5,5,5,5)
 
         self.layout = QtWidgets.QVBoxLayout()
-        self.layout.setContentsMargins(30, 10, 30, 10)
+        self.layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.layout)
         self.layout.addWidget(self.frame)
 
@@ -552,8 +472,20 @@ class DetectorShapeWidget(QtWidgets.QWidget):
         self.shapeName.setAlignment(Qt.AlignLeft)
         self.titlebar_layout.addWidget(self.shapeName, 2)
 
+        self.checkBox_ToggleHiding = QtWidgets.QCheckBox()
+        self.titlebar_layout.addWidget(self.checkBox_ToggleHiding, alignment=Qt.AlignRight)
+        # Change hide/show checkboxes to triangles
+        # self.titlebar.setStyleSheet(
+        #     "background-color: #000000;"
+        #     "QCheckBox::indicator {width:14;height: 14px;}"
+        #     "QCheckBox::indicator:checked { image:url(./gui/icons/arrow_open.png)}"
+        #     "QCheckBox::indicator:unchecked { image:url(./gui/icons/arrow_closed.png)}"
+        # )
+
         self.delButton = QtWidgets.QPushButton("Del")
         self.titlebar_layout.addWidget(self.delButton)
+
+
 
         self.frame_layout.addWidget(self.titlebar)
 
@@ -565,6 +497,7 @@ class DetectorShapeWidget(QtWidgets.QWidget):
         self.frame.setObjectName("frame")
         self.frame_layout.setSpacing(0)
         self.frame.setStyleSheet("QFrame#frame{border: 3px solid #444a4f;}")
+                                 # "QFrame#frame:hover{border: 3px solid #FFFF00;}")
 
         # BottomGrid
         self.firstLineLabel = QtWidgets.QLabel("x , y")
@@ -623,17 +556,42 @@ class DetectorShapeWidget(QtWidgets.QWidget):
             self.secondLineText1.hide()
             self.secondLineText2.hide()
 
+        self.bottom.setVisible(False)
+        self.checkBox_ToggleHiding.stateChanged.connect(self.bottom.setVisible)
+        self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.Fixed)
+
+        self.addEnterEvent(lambda: self.frame.setStyleSheet("QFrame#frame{border: 3px solid #ffff00;}"))
+        self.addLeaveEvent(lambda: self.frame.setStyleSheet("QFrame#frame{border: 3px solid #444a4f;}"))
+
+
+    def addKeyEvent(self, func):
+        self.keyEvent_list.append(func)
+
+    def addEnterEvent(self, func):
+        self.enterEvent_list.append(func)
+
+    def addLeaveEvent(self, func):
+        self.leaveEvent_list.append(func)
+
     def keyReleaseEvent(self, a0: QtGui.QKeyEvent) -> None:
         if a0.key() in (QtCore.Qt.Key_Down,QtCore.Qt.Key_Up,QtCore.Qt.Key_Enter,QtCore.Qt.Key_Return):
             for func in self.keyEvent_list:
                 func()
 
-    def addKeyEvent(self, func):
-        self.keyEvent_list.append(func)
+    def enterEvent(self, a0: QtCore.QEvent) -> None:
+        super().enterEvent(a0)
+        for func in self.enterEvent_list:
+            func()
+
+    def leaveEvent(self, a0: QtCore.QEvent) -> None:
+        super().leaveEvent(a0)
+        for func in self.leaveEvent_list:
+            func()
 
 
+    def mouseReleaseEvent(self, a0: QtGui.QMouseEvent) -> None:
+        print(a0.source())
 
-################### Non control-panel widgets #####################
 
 
 class SaveWidget(QtWidgets.QWidget):
@@ -665,6 +623,7 @@ class SaveWidget(QtWidgets.QWidget):
         self.setLayout(layout)
         #self.setFixedWidth(260)
         #self.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed))
+
 
 class EditMetadataWidget(QtWidgets.QWidget):
     """
@@ -739,6 +698,7 @@ class EditMetadataWidget(QtWidgets.QWidget):
         tab.setLayout(tab_layout)
         return tab
 
+
 class SectionLabel(QtWidgets.QWidget):
     def __init__(self,section_title):
         QtWidgets.QWidget.__init__(self)
@@ -762,65 +722,163 @@ class SectionLabel(QtWidgets.QWidget):
 
         self.setLayout(layout)
 
-class HideableWidget(QtWidgets.QWidget):
 
-    def __init__(self, title, widget, initial_state=True):
-        """
-        Makes a widget with a bar at the top with the title and a checkbox controlling the
-        widget's visibility.
-        Accepts:
-            title:  str
-            widget: QWidget object
-            initial_state: bool, indicating if the widget is visible or not on loading
-        """
-        QtWidgets.QWidget.__init__(self)
-        self.widget = widget
+class TitleBar(QtWidgets.QWidget):
 
-        # Checkbox controlling whether widget is hidden
-        self.checkBox_ToggleHiding = QtWidgets.QCheckBox()
-        # Title
-        self.label_Title = QtWidgets.QLabel(title)
-        self.label_Title.setFont(titleFont)
+    def __init__(self, mainWindow:QMainWindow, parent):
+        self.parent = parent
+        super().__init__()
 
-        title_layout = QtWidgets.QHBoxLayout()
-        title_layout.addWidget(self.checkBox_ToggleHiding,0,QtCore.Qt.AlignLeft)
-        title_layout.addWidget(self.label_Title,1,QtCore.Qt.AlignLeft)
-        #title_layout.setSpacing(0)
-        title_layout.setContentsMargins(0,0,0,0)
-        title_frame = QtWidgets.QFrame()
-        title_frame.setFrameShadow(QtWidgets.QFrame.Plain)
-        title_frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        title_frame.setLineWidth(1)
-        title_frame.setFixedWidth(control_panel_width)
-        title_frame.setLayout(title_layout)
+        self.layout = QtWidgets.QHBoxLayout()
+        self.setLayout(self.layout)
+        self.mainWindow = mainWindow
+        self.menu = self.createMenu(mainWindow)
+        self.window_control = self.WindowControlBar(mainWindow)
+        self.label_filename = QtWidgets.QLabel("filename")
 
-		# Change hide/show checkboxes to triangles
-        title_frame.setStyleSheet(
-            "background-color: #000000;"
-			"QCheckBox::indicator {width:14;height: 14px;}"
-			"QCheckBox::indicator:checked { image:url(./gui/icons/arrow_open.png)}"
-			"QCheckBox::indicator:unchecked { image:url(./gui/icons/arrow_closed.png)}"
-			)
+        self.layout.addWidget(self.menu,alignment=Qt.AlignLeft)
+        self.layout.addWidget(self.label_filename, alignment=Qt.AlignLeft)
+        self.layout.addWidget(self.window_control,alignment=Qt.AlignRight)
 
-        # Layout
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(title_frame,0)
-        layout.addWidget(self.widget,1,QtCore.Qt.AlignTop)
-        layout.setSpacing(0)
-        layout.setContentsMargins(10,4,4,0)
-        self.setLayout(layout)
 
-        # Connect checkbox to toggling visibility
-        self.checkBox_ToggleHiding.stateChanged.connect(widget.setVisible)
+        self.setMaximumHeight(50)
+        self.setContentsMargins(0, 0, 0, 0)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
 
-        self.checkBox_ToggleHiding.setChecked(initial_state)
-        self.widget.setVisible(initial_state)
+    def createMenu(self, mainWindow:QMainWindow):
+        menubar = mainWindow.menuBar()
+        filemenu = menubar.addMenu('    &File    ')
+        openmenu = filemenu.addMenu('   &open  ')
+        self._openRecentMenu = filemenu.addMenu('   &open Recent File  ')
+        save_menu = filemenu.addMenu('   &save  ')
 
-#def set_stylesheet(widget):
-#    widget.setStyleSheet(
-#			"QLayout::setContentsMargins(0,0,0,0)"
-#            "QLayout::setSpacing(0)"
-#            )
+        # OPENMENU
+        self.openAuto = QtWidgets.QAction("&auto", self)
+        self.openDM = QtWidgets.QAction("&DM Memory Map", self)
+        self.openGatan = QtWidgets.QAction("&Gatan K2 Binary", self)
+        self.openEMPAD = QtWidgets.QAction("&EMPAD", self)
+        # openAuto.triggered.connect(openFile)
+        openmenu.addAction(self.openAuto)
+        openmenu.addAction(self.openDM)
+        openmenu.addAction(self.openGatan)
+        openmenu.addAction(self.openEMPAD)
+
+        self.addRecentFileMenu()
+
+        # Save Menu
+        self.save_as_file = QtWidgets.QAction("&save as file", self)
+        self.save_as_directory = QtWidgets.QAction("&save as directory", self)
+        save_menu.addAction(self.save_as_file)
+        save_menu.addAction(self.save_as_directory)
+
+
+        menubar.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
+        return menubar
+
+    def addRecentFile(self, filePath):
+        # insert recent file to database
+        db = database.DBFileList()
+        db.insertOpenFileList(filePath, "not implemented yet")
+        self.addRecentFileMenu()
+
+    def addRecentFileMenu(self):
+        # Open Recent Menu
+        self._openRecentMenu.clear()
+        self.openRecentFileActionList = []
+        fileList = database.DBFileList().getOpenFileList()
+        fileList.reverse()
+        for file in fileList:
+            filePath = file[1]
+            qAction = QtWidgets.QAction("&" + filePath, self)
+            self.openRecentFileActionList.append(qAction)
+            self._openRecentMenu.addAction(qAction)
+            qAction.triggered.connect(lambda: self.mainWindow.load_file(0,filePath=qAction.text()[1:]))
+            qAction.triggered.connect(lambda: self.mainWindow.settings.data_filename.update_value(qAction.text()[1:]))
+
+    def mouseMoveEvent(self, a0: QtGui.QMouseEvent) -> None:
+        if self.window_control.mainWindow.isMaximized():
+            return
+
+        if self.window_control.isMaximized():
+            return
+
+        if not hasattr(self,'pressing'):
+            return
+
+
+        if self.pressing:
+            self.end = self.mapToGlobal(a0.pos())
+            self.movement = self.end - self.start
+            self.parent.setGeometry(self.mapToGlobal(self.movement).x(),
+                                    self.mapToGlobal(self.movement).y(),
+                                    self.parent.width(),
+                                    self.parent.height())
+            self.start = self.end
+
+    def mousePressEvent(self, a0: QtGui.QMouseEvent) -> None:
+        self.start = self.mapToGlobal(a0.pos())
+        self.pressing = True
+
+    def mouseReleaseEvent(self, a0: QtGui.QMouseEvent) -> None:
+        self.pressing = False
+
+    def mouseDoubleClickEvent(self, a0: QtGui.QMouseEvent) -> None:
+        if self.window_control.mainWindow.isMaximized():
+            self.window_control.showNormal()
+        else :
+            self.window_control.showMaximized()
+
+    class WindowControlBar(QtWidgets.QWidget):
+        def __init__(self, mainWindow: QMainWindow):
+            super().__init__()
+            BUTTON_WIDTH = 5
+            BUTTON_HEIGHT = 20
+            self.layout = QtWidgets.QHBoxLayout()
+            self.setLayout(self.layout)
+            self.setContentsMargins(0, 0, 0, 0)
+            self.layout.setContentsMargins(0, 0, 0, 0)
+            self.layout.setSpacing(0)
+            self.ButtonMin = QtWidgets.QPushButton("-")
+            self.ButtonMin.setFixedSize(QtCore.QSize(BUTTON_WIDTH, BUTTON_HEIGHT))
+            self.ButtonMin.setObjectName("ButtonMin")
+            self.ButtonMax = QtWidgets.QPushButton("+")
+            self.ButtonMax.setFixedSize(QtCore.QSize(BUTTON_WIDTH, BUTTON_HEIGHT))
+            self.ButtonMax.setObjectName("ButtonMax")
+            self.ButtonRestore = QtWidgets.QPushButton("□")
+            self.ButtonRestore.setFixedSize(QtCore.QSize(BUTTON_WIDTH, BUTTON_HEIGHT))
+            self.ButtonRestore.setObjectName("ButtonRestore")
+            self.ButtonRestore.setVisible(False)
+            self.ButtonClose = QtWidgets.QPushButton("x")
+            self.ButtonClose.setFixedSize(QtCore.QSize(BUTTON_WIDTH, BUTTON_HEIGHT))
+            self.ButtonClose.setObjectName("ButtonClose")
+            self.layout.addWidget(self.ButtonMin)
+            self.layout.addWidget(self.ButtonMax)
+            self.layout.addWidget(self.ButtonRestore)
+            self.layout.addWidget(self.ButtonClose)
+            self.mainWindow = mainWindow.main_window
+            self.ButtonMin.clicked.connect(self.showMinimized)
+            self.ButtonMax.clicked.connect(self.showMaximized)
+            self.ButtonRestore.clicked.connect(self.showNormal)
+            self.ButtonClose.clicked.connect(self.close)
+
+        def showMinimized(self):
+            self.mainWindow.showMinimized()
+
+        def showMaximized(self):
+            self.mainWindow.showMaximized()
+            self.ButtonMax.setVisible(False)
+            self.ButtonRestore.setVisible(True)
+
+        def showNormal(self):
+            self.mainWindow.showNormal()
+            self.ButtonMax.setVisible(True)
+            self.ButtonRestore.setVisible(False)
+
+        def close(self):
+            self.mainWindow.close()
+
+
 
 
 if __name__ == '__main__':
@@ -832,12 +890,7 @@ if __name__ == '__main__':
     app.exec_()
 
 
-
-
-
 #app = QtWidgets.QApplication(sys.argv)
 #controlPanel = ControlPanel()
 #controlPanel.show()
 #sys.exit(app.exec_())
-
-

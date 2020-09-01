@@ -242,11 +242,18 @@ class FileLQ(LoggedQuantity):
         self.default_dir = default_dir
 
     def connect_to_browse_widgets(self, lineEdit, pushButton):
-        assert type(lineEdit) == QtWidgets.QLineEdit
+        # assert type(lineEdit) == QtWidgets.QLineEdit
+        # self.connect_bidir_to_widget(lineEdit)
+
+        # assert type(pushButton) == QtWidgets.QPushButton
+        # pushButton.clicked.connect(self.file_browser)
+
+        assert type(lineEdit) == QtWidgets.QLabel
         self.connect_bidir_to_widget(lineEdit)
 
-        assert type(pushButton) == QtWidgets.QPushButton
-        pushButton.clicked.connect(self.file_browser)
+        assert type(pushButton) == QtWidgets.QAction
+        pushButton.triggered.connect(self.file_browser)
+
 
     def file_browser(self):
         
@@ -258,6 +265,8 @@ class FileLQ(LoggedQuantity):
         print(repr(fname))
         if fname:
             self.update_value(fname)
+        else:
+            self.update_value("")
 
 
 
