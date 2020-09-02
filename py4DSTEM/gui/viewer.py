@@ -150,8 +150,8 @@ class DataViewer(QtWidgets.QMainWindow):
         # virtual_detector_shape_control_widget.secondLineText1.valueChanged.connect(self.update_roi)
         # virtual_detector_shape_control_widget.secondLineText2.valueChanged.connect(self.update_roi)
         detector.controlWidget.addKeyEvent(detector.dialog_to_roi_update)
-        detector.controlWidget.addEnterEvent(lambda: roi.setPen(color='y'))
-        detector.controlWidget.addLeaveEvent(lambda: roi.setPen(color='g'))
+        detector.controlWidget.addEnterEvent(lambda: detector.rois[0].setPen(color='y'))
+        detector.controlWidget.addLeaveEvent(lambda: detector.rois[0].setPen(color='g'))
         if diffractionSpace:
             detector.controlWidget.delButton.clicked.connect(
                 lambda: self.detectorGroup_diffractionSpace.deleteDetector(detector))
