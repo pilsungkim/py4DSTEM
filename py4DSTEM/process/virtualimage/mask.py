@@ -215,26 +215,29 @@ def get_compound_mask_list(mask_list: list):
     return compound_mask
 
 
-def get_mask_grp_from_rois(roi_list: list, dc: datacube, diffractionImageItem: pg.ImageView):
+def get_mask_grp_from_rois(detector_grp: list, dc: datacube, diffractionImageItem: pg.ImageView):
+
     roi_mask_grp = []
-    for roi in roi_list:
-        slices, transforms = roi[1].getArraySlice(dc.data[0, 0, :, :],
+    for dtt in detector_grp:
+        shape_type = dtt.shape_type
+        rois = dtt.rois
+        slices, transforms = dtt.rois[0].getArraySlice(dc.data[0, 0, :, :],
                                                   diffractionImageItem)
-        if roi[0] in (ct.DetectorShape.rectangular, ct.DetectorShape.circular):
-            mask = RoiMask(roiShape=roi[0], slices=slices)
-        elif roi[0] is ct.DetectorShape.point:
-            x = np.int(np.ceil(roi[1].x()))
-            y = np.int(np.ceil(roi[1].y()))
+        if shape_type in (ct.DetectorShape.rectangular, ct.DetectorShape.circular):
+            mask = RoiMask(roiShape=shape_type, slices=slices)
+        elif shape_type is ct.DetectorShape.point:
+            x = np.int(np.ceil(rois[0].x()))
+            y = np.int(np.ceil(rois[0].y()))
             slices = (slice(x, x + 1), slice(y, y + 1))
-            mask = RoiMask(roiShape=roi[0], slices=slices)
-        elif roi[0] is ct.DetectorShape.annular:
+            mask = RoiMask(roiShape=shape_type, slices=slices)
+        elif shape_type is ct.DetectorShape.annular:
             slice_x, slice_y = slices
-            slices_inner, transforms = roi[2].getArraySlice(dc.data[0, 0, :, :],
+            slices_inner, transforms = rois[1].getArraySlice(dc.data[0, 0, :, :],
                                                             diffractionImageItem)
             slice_inner_x, slice_inner_y = slices_inner
             R = 0.5 * ((slice_inner_x.stop - slice_inner_x.start) / (slice_x.stop - slice_x.start) + (
                     slice_inner_y.stop - slice_inner_y.start) / (slice_y.stop - slice_y.start))
-            mask = RoiMask(roiShape=roi[0], slices=slices, innerR=R)
+            mask = RoiMask(roiShape=shape_type, slices=slices, innerR=R)
         roi_mask_grp.append(mask)
     return roi_mask_grp
 

@@ -82,10 +82,14 @@ class ControlPanel(QtWidgets.QWidget):
         self.buttonGroup_DetectorMode = self.detectorModeTabs.diffractionSpaceTab.buttonGroup_DetectorMode
 
         self.detectorShapeTabs = DetectorShapeTabs()
-        self.pushButton_add_Rectangular_Virtual_Aperture = self.detectorShapeTabs.diffractionSpaceTab.pushButton_RectDetector
-        self.pushButton_add_Circle_Virtual_Aperture = self.detectorShapeTabs.diffractionSpaceTab.pushButton_CircDetector
-        self.pushButton_add_Annular_Virtual_Aperture = self.detectorShapeTabs.diffractionSpaceTab.pushButton_AnnularDetector
-        self.pushButton_add_Point_Virtual_Aperture = self.detectorShapeTabs.diffractionSpaceTab.pushButton_PointDetector
+        self.pushBtn_rect_diffractionSpace = self.detectorShapeTabs.diffractionSpaceTab.pushButton_RectDetector
+        self.pushBtn_circ_diffractionSpace = self.detectorShapeTabs.diffractionSpaceTab.pushButton_CircDetector
+        self.pushBtn_annular_diffractionSpace = self.detectorShapeTabs.diffractionSpaceTab.pushButton_AnnularDetector
+        self.pushBtn_point_diffractionSpace = self.detectorShapeTabs.diffractionSpaceTab.pushButton_PointDetector
+        self.pushBtn_rect_realSpace = self.detectorShapeTabs.realSpaceTab.pushButton_RectDetector
+        self.pushBtn_circ_realSpace = self.detectorShapeTabs.realSpaceTab.pushButton_CircDetector
+        self.pushBtn_annular_realSpace = self.detectorShapeTabs.realSpaceTab.pushButton_AnnularDetector
+        self.pushBtn_point_realSpace = self.detectorShapeTabs.realSpaceTab.pushButton_PointDetector
 
         self.analysisTabs = AnalysisTabs()
         self.pushButton_LaunchStrain = self.analysisTabs.analysisTab.singleCrystal_pushbutton
@@ -447,7 +451,7 @@ class AnalysisTabs(QtWidgets.QTabWidget):
 
 
 class DetectorShapeWidget(QtWidgets.QWidget):
-    def __init__(self, shape:str):
+    def __init__(self, shape:str, name:str=None):
         super().__init__()
         self.keyEvent_list = []
         self.enterEvent_list = []
@@ -538,20 +542,27 @@ class DetectorShapeWidget(QtWidgets.QWidget):
         self.bottomGridLayout.addWidget(self.secondLineText1, 1, 1)
         self.bottomGridLayout.addWidget(self.secondLineText2, 1, 2)
 
+        if name is None:
+            if shape == ct.DetectorShape.rectangular:
+                name = "Rectangular Detector"
+            elif shape == ct.DetectorShape.circular:
+                name = "Circular Detector"
+            elif shape == ct.DetectorShape.circular:
+                name = "Annular Detector"
+            elif shape == ct.DetectorShape.point:
+                name = "Point Detector"
+        self.shapeName.setText(name)
+
         if shape == ct.DetectorShape.rectangular:
-            self.shapeName.setText("Rectangular Mask")
             self.secondLineLabel.setText("size X,Y")
         if shape == ct.DetectorShape.circular:
-            self.shapeName.setText("Circular Mask")
             self.firstLineLabel.setText("center x, y")
             self.secondLineLabel.setText("radius")
             self.secondLineText2.hide()
         if shape == ct.DetectorShape.annular:
-            self.shapeName.setText("Annular Mask")
             self.firstLineLabel.setText("center x, y")
             self.secondLineLabel.setText("out/inner rad")
         if shape == ct.DetectorShape.point:
-            self.shapeName.setText("Point Mask")
             self.secondLineLabel.hide()
             self.secondLineText1.hide()
             self.secondLineText2.hide()
