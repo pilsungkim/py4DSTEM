@@ -374,8 +374,10 @@ class DetectorShapeTabs(QtWidgets.QTabWidget):
         QtWidgets.QTabWidget.__init__(self)
 
         self.diffractionSpaceTab = self.DiffractionSpaceTab()
+        self.realSpaceTab = self.RealSpaceTab()
 
         self.addTab(self.diffractionSpaceTab, "Diffraction Space")
+        self.addTab(self.realSpaceTab, "Real Space")
 
     class DiffractionSpaceTab(QtWidgets.QWidget):
         def __init__(self):
@@ -395,8 +397,6 @@ class DetectorShapeTabs(QtWidgets.QTabWidget):
             detector_shape_button_layout.addWidget(self.pushButton_AnnularDetector)
             detector_shape_button_layout.addWidget(self.pushButton_PointDetector)
             detector_shape_button_group.setLayout(detector_shape_button_layout)
-
-
 
             self.detector_shape_group = QtWidgets.QWidget()
             self.detector_shape_group_widget_layout = QtWidgets.QVBoxLayout()
@@ -418,14 +418,15 @@ class DetectorShapeTabs(QtWidgets.QTabWidget):
             scrollArea.setFrameStyle(QtWidgets.QFrame.NoFrame)
             scrollArea.setContentsMargins(0,0,0,0)
 
-
-
             self.layout = QtWidgets.QVBoxLayout()
             self.layout.addWidget(detector_shape_button_group)
             self.layout.addWidget(scrollArea)
             self.setLayout(self.layout)
             self.layout.setSpacing(0)
             self.layout.setContentsMargins(0,0,0,0)
+
+    class RealSpaceTab(DiffractionSpaceTab):
+        pass
 
 
 class AnalysisTabs(QtWidgets.QTabWidget):
@@ -443,7 +444,6 @@ class AnalysisTabs(QtWidgets.QTabWidget):
             self.setLayout(self.layout)
             self.singleCrystal_pushbutton = QtWidgets.QPushButton("Single Crystal")
             self.layout.addWidget(self.singleCrystal_pushbutton)
-
 
 
 class DetectorShapeWidget(QtWidgets.QWidget):
@@ -593,7 +593,6 @@ class DetectorShapeWidget(QtWidgets.QWidget):
         print(a0.source())
 
 
-
 class SaveWidget(QtWidgets.QWidget):
     """
     Takes one argument - save_path - a string with a filename for the output file.
@@ -698,7 +697,7 @@ class EditMetadataWidget(QtWidgets.QWidget):
         tab.setLayout(tab_layout)
         return tab
 
-
+# used in panel.py
 class SectionLabel(QtWidgets.QWidget):
     def __init__(self,section_title):
         QtWidgets.QWidget.__init__(self)
@@ -803,7 +802,7 @@ class TitleBar(QtWidgets.QWidget):
         if self.window_control.isMaximized():
             return
 
-        if not hasattr(self,'pressing'):
+        if not hasattr(self, 'pressing'):
             return
 
 

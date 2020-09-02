@@ -4,8 +4,6 @@ import numpy as np
 # from ...file.datastructure import DataCube
 from py4DSTEM.file.datastructure import DataCube
 
-def test():
-    return True
 
 def get_virtualimage_rect(datacube, xmin, xmax, ymin, ymax):
     """

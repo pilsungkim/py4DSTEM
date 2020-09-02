@@ -197,7 +197,7 @@ class DataViewer(QtWidgets.QMainWindow):
         self.control_widget.pushButton_add_Point_Virtual_Aperture.clicked.connect(lambda: self.create_virtual_detector_shape(ct.DetectorShape.point))
         #########################
 
-        self.widget_roi_dic = {}
+        self.dic_widget_roi_diffractionspace = {}
 
         # self.settings.New('virtual_detector_shape', dtype=int, initial=0)
         # self.settings.virtual_detector_shape.connect_bidir_to_widget(self.control_widget.buttonGroup_DetectorShape)
@@ -281,13 +281,15 @@ class DataViewer(QtWidgets.QMainWindow):
         virtual_detector_shape_control_widget.addEnterEvent(lambda: roi.setPen(color='y'))
         virtual_detector_shape_control_widget.addLeaveEvent(lambda: roi.setPen(color='g'))
 
-        self.widget_roi_dic.update({virtual_detector_shape_control_widget: virtual_detector_rois})
+        self.dic_widget_roi_diffractionspace.update({virtual_detector_shape_control_widget: virtual_detector_rois})
         self.update_real_space_view()
+
+
 
     def delete_virtual_detector_shape(self, virtual_detector_shape_control_widget):
         # Remove existing detector
-        if virtual_detector_shape_control_widget in self.widget_roi_dic:
-            rois = self.widget_roi_dic.pop(virtual_detector_shape_control_widget)
+        if virtual_detector_shape_control_widget in self.dic_widget_roi_diffractionspace:
+            rois = self.dic_widget_roi_diffractionspace.pop(virtual_detector_shape_control_widget)
         # virtual_detector_shape_control_widget.hide()
         virtual_detector_shape_control_widget.close()
 
@@ -449,8 +451,8 @@ class DataViewer(QtWidgets.QMainWindow):
             self.datacube,_ = read(fname, ft='empad')
 
         # remove detector shape
-        while len(self.widget_roi_dic) > 0:
-            self.delete_virtual_detector_shape(list(self.widget_roi_dic.keys())[0])
+        while len(self.dic_widget_roi_diffractionspace) > 0:
+            self.delete_virtual_detector_shape(list(self.dic_widget_roi_diffractionspace.keys())[0])
 
 
         # Update scan shape information
@@ -793,15 +795,15 @@ class DataViewer(QtWidgets.QMainWindow):
         if self.updating_roi:
             return
 
-        if self.widget_roi_dic is None:
+        if self.dic_widget_roi_diffractionspace is None:
             return
         controlwidget: DetectorShapeWidget
         virtual_detector_mode = self.settings.virtual_detector_mode.val
-        for controlwidget in self.widget_roi_dic.keys():
+        for controlwidget in self.dic_widget_roi_diffractionspace.keys():
             # a = DetectorShapeWidget(0)
             # self.widget_roi_dic.get(controlwidget)
 
-            roi: pg.ROI = self.widget_roi_dic[controlwidget][1]
+            roi: pg.ROI = self.dic_widget_roi_diffractionspace[controlwidget][1]
             roi_state = roi.getState()
             x0, y0 = roi_state['pos']
             size_x, size_y = roi_state['size']
@@ -818,9 +820,9 @@ class DataViewer(QtWidgets.QMainWindow):
             # x0 = slice_x.start
             # y0 = slice_y.start
             # _R = size_x / 2
-            types = self.widget_roi_dic[controlwidget][0]
+            types = self.dic_widget_roi_diffractionspace[controlwidget][0]
             if types == ct.DetectorShape.annular:
-                roi2: pg.ROI = self.widget_roi_dic[controlwidget][2]
+                roi2: pg.ROI = self.dic_widget_roi_diffractionspace[controlwidget][2]
                 roi2_state = roi2.getState()
                 size_x, size_y = roi2_state['size']
                 _innerR = size_x/2
@@ -847,17 +849,17 @@ class DataViewer(QtWidgets.QMainWindow):
     def update_roi(self):
         self.updating_roi = True
         controlwidget: DetectorShapeWidget
-        for controlwidget in self.widget_roi_dic.keys():
+        for controlwidget in self.dic_widget_roi_diffractionspace.keys():
 
-            types = self.widget_roi_dic[controlwidget][0]
+            types = self.dic_widget_roi_diffractionspace[controlwidget][0]
             # InitialLizing ROIs #
-            roi: pg.ROI = self.widget_roi_dic[controlwidget][1]
+            roi: pg.ROI = self.dic_widget_roi_diffractionspace[controlwidget][1]
 
             prev_state = roi.getState()
             state = roi.getState()
 
             if types == ct.DetectorShape.annular: #for Annular
-                roi2: pg.ROI = self.widget_roi_dic[controlwidget][2]
+                roi2: pg.ROI = self.dic_widget_roi_diffractionspace[controlwidget][2]
                 state2 = roi.getState()
 
             # Set Size #
@@ -907,28 +909,13 @@ class DataViewer(QtWidgets.QMainWindow):
         self.update_dialog()
 
         # if roi none
-        if len(self.widget_roi_dic) == 0:
+        if len(self.dic_widget_roi_diffractionspace) == 0:
             return
 
         # create mask
-        roi_mask_grp = []
-        for roi in self.widget_roi_dic.values():
-            slices, transforms = roi[1].getArraySlice(self.datacube.data[0, 0, :, :],self.diffraction_space_widget.getImageItem())
-            if roi[0] in (ct.DetectorShape.rectangular,ct.DetectorShape.circular):
-                mask = mk.RoiMask(roiShape=roi[0],slices=slices)
-            elif roi[0] is ct.DetectorShape.point:
-                x = np.int(np.ceil(roi[1].x()))
-                y = np.int(np.ceil(roi[1].y()))
-                slices = (slice(x,x+1),slice(y,y+1))
-                mask = mk.RoiMask(roiShape=roi[0], slices=slices)
-            elif roi[0] is ct.DetectorShape.annular:
-                slice_x, slice_y = slices
-                slices_inner, transforms = roi[2].getArraySlice(self.datacube.data[0, 0, :, :],self.diffraction_space_widget.getImageItem())
-                slice_inner_x, slice_inner_y = slices_inner
-                R = 0.5 * ((slice_inner_x.stop - slice_inner_x.start) / (slice_x.stop - slice_x.start) + (
-                            slice_inner_y.stop - slice_inner_y.start) / (slice_y.stop - slice_y.start))
-                mask = mk.RoiMask(roiShape=roi[0], slices=slices, innerR=R)
-            roi_mask_grp.append(mask)
+        roi_mask_grp = mk.get_mask_grp_from_rois(self.dic_widget_roi_diffractionspace.values(),
+                                                 self.datacube,
+                                                 self.diffraction_space_widget.getImageItem())
 
         # Get Virtual Image
 

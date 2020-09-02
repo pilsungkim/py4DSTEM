@@ -5,6 +5,9 @@
 *.ipynb_checkpoints*
 
 # Folders #
+/*
+!/py4DSTEM
+/py4DSTEM/gui/runGUI.py
 .idea/
 __pycache__/
 *.egg-info/

@@ -2,6 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import copy
 import py4DSTEM.process.utils.constants as ct
+import py4DSTEM.file.datastructure.datacube as datacube
+import pyqtgraph as pg
+
 
 class RoiMask():
 
@@ -24,7 +27,7 @@ class RoiMask():
         elif roiShape == ct.DetectorShape.annular:
             self.data = get_annular_mask(self.size_x, self.size_y, self.innerR)
         elif roiShape == ct.DetectorShape.zero:
-            self.data = np.zeros((self.size_x, self.size_y),dtype=bool)
+            self.data = np.zeros((self.size_x, self.size_y), dtype=bool)
         elif roiShape is None:
             self.data = data
 
@@ -38,8 +41,8 @@ class RoiMask():
 
     def getCenter(self):
         grid_y, grid_x = np.meshgrid(
-            np.arange(self.slice_y.start,self.slice_y.stop),
-            np.arange(self.slice_x.start,self.slice_x.stop)
+            np.arange(self.slice_y.start, self.slice_y.stop),
+            np.arange(self.slice_x.start, self.slice_x.stop)
         )
         center_x = int(np.sum(grid_x * self.data) / np.sum(self.data))
         center_y = int(np.sum(grid_y * self.data) / np.sum(self.data))
@@ -87,11 +90,11 @@ class RoiMaskList(list):
         # put data in new_masks
         for roiMask, new_mask in zip(self, new_masks):
             new_mask.data[
-                roiMask.slice_x.start - zero_mask.slice_x.start:
-                roiMask.slice_x.stop - zero_mask.slice_x.start,
-                roiMask.slice_y.start - zero_mask.slice_y.start:
-                roiMask.slice_y.stop - zero_mask.slice_y.start
-                ] = roiMask.data
+            roiMask.slice_x.start - zero_mask.slice_x.start:
+            roiMask.slice_x.stop - zero_mask.slice_x.start,
+            roiMask.slice_y.start - zero_mask.slice_y.start:
+            roiMask.slice_y.stop - zero_mask.slice_y.start
+            ] = roiMask.data
 
         # merge it
         rs_mask = copy.deepcopy(zero_mask)
@@ -106,7 +109,7 @@ class RoiMaskList(list):
         max_x = np.max([roiMask.slice_x.stop for roiMask in masks])
         max_y = np.max([roiMask.slice_y.stop for roiMask in masks])
         zero_maskdata = np.zeros((max_x - min_x, max_y - min_y))
-        return RoiMask((slice(min_x,max_x),slice(min_y,max_y)),data=zero_maskdata)
+        return RoiMask((slice(min_x, max_x), slice(min_y, max_y)), data=zero_maskdata)
 
     def isOverlapped(self):
         # create zero mask
@@ -118,11 +121,11 @@ class RoiMaskList(list):
         # put data in new_masks
         for roiMask, new_mask in zip(self, new_masks):
             new_mask.data[
-                roiMask.slice_x.start - zero_mask.slice_x.start:
-                roiMask.slice_x.stop - zero_mask.slice_x.start,
-                roiMask.slice_y.start - zero_mask.slice_y.start:
-                roiMask.slice_y.stop - zero_mask.slice_y.start
-                ] = roiMask.data
+            roiMask.slice_x.start - zero_mask.slice_x.start:
+            roiMask.slice_x.stop - zero_mask.slice_x.start,
+            roiMask.slice_y.start - zero_mask.slice_y.start:
+            roiMask.slice_y.stop - zero_mask.slice_y.start
+            ] = roiMask.data
 
         # merge it
         rs_mask = copy.deepcopy(zero_mask)
@@ -134,10 +137,8 @@ class RoiMaskList(list):
         else:
             return False
 
-###############
 
 def merge(mask_list: list):
-
     if len(mask_list) == 1:
         return mask_list[0]
 
@@ -150,11 +151,11 @@ def merge(mask_list: list):
     # put data in new_masks
     for roiMask, new_mask in zip(mask_list, new_masks):
         new_mask.data[
-            roiMask.slice_x.start - zero_mask.slice_x.start:
-            roiMask.slice_x.stop - zero_mask.slice_x.start,
-            roiMask.slice_y.start - zero_mask.slice_y.start:
-            roiMask.slice_y.stop - zero_mask.slice_y.start
-            ] = roiMask.data
+        roiMask.slice_x.start - zero_mask.slice_x.start:
+        roiMask.slice_x.stop - zero_mask.slice_x.start,
+        roiMask.slice_y.start - zero_mask.slice_y.start:
+        roiMask.slice_y.stop - zero_mask.slice_y.start
+        ] = roiMask.data
 
     # merge it
     rs_mask = copy.deepcopy(zero_mask)
@@ -170,7 +171,7 @@ def create_zero_mask(masks):
     max_x = np.max([roiMask.slice_x.stop for roiMask in masks])
     max_y = np.max([roiMask.slice_y.stop for roiMask in masks])
     zero_maskdata = np.zeros((max_x - min_x, max_y - min_y))
-    return RoiMask((slice(min_x,max_x),slice(min_y,max_y)),data=zero_maskdata)
+    return RoiMask((slice(min_x, max_x), slice(min_y, max_y)), data=zero_maskdata)
 
 
 def isOverlapped(mask_list: list):
@@ -183,11 +184,11 @@ def isOverlapped(mask_list: list):
     # put data in new_masks
     for roiMask, new_mask in zip(mask_list, new_masks):
         new_mask.data[
-            roiMask.slice_x.start - zero_mask.slice_x.start:
-            roiMask.slice_x.stop - zero_mask.slice_x.start,
-            roiMask.slice_y.start - zero_mask.slice_y.start:
-            roiMask.slice_y.stop - zero_mask.slice_y.start
-            ] = roiMask.data
+        roiMask.slice_x.start - zero_mask.slice_x.start:
+        roiMask.slice_x.stop - zero_mask.slice_x.start,
+        roiMask.slice_y.start - zero_mask.slice_y.start:
+        roiMask.slice_y.stop - zero_mask.slice_y.start
+        ] = roiMask.data
 
     # merge it
     rs_mask = copy.deepcopy(zero_mask)
@@ -199,23 +200,43 @@ def isOverlapped(mask_list: list):
     else:
         return False
 
-def get_compound_mask_list(mask_list: list):
 
+def get_compound_mask_list(mask_list: list):
     compound_mask = []
 
     while len(mask_list) > 0:
         overlappedMask = [mask_list.pop(0)]
         for mask in mask_list:
-            if isOverlapped(overlappedMask+[mask]):
+            if isOverlapped(overlappedMask + [mask]):
                 _mask = mask_list.pop(mask_list.index(mask))
                 overlappedMask.append(_mask)
         compound_mask.append(merge(overlappedMask))
 
     return compound_mask
 
-###############
 
-
+def get_mask_grp_from_rois(roi_list: list, dc: datacube, diffractionImageItem: pg.ImageView):
+    roi_mask_grp = []
+    for roi in roi_list:
+        slices, transforms = roi[1].getArraySlice(dc.data[0, 0, :, :],
+                                                  diffractionImageItem)
+        if roi[0] in (ct.DetectorShape.rectangular, ct.DetectorShape.circular):
+            mask = RoiMask(roiShape=roi[0], slices=slices)
+        elif roi[0] is ct.DetectorShape.point:
+            x = np.int(np.ceil(roi[1].x()))
+            y = np.int(np.ceil(roi[1].y()))
+            slices = (slice(x, x + 1), slice(y, y + 1))
+            mask = RoiMask(roiShape=roi[0], slices=slices)
+        elif roi[0] is ct.DetectorShape.annular:
+            slice_x, slice_y = slices
+            slices_inner, transforms = roi[2].getArraySlice(dc.data[0, 0, :, :],
+                                                            diffractionImageItem)
+            slice_inner_x, slice_inner_y = slices_inner
+            R = 0.5 * ((slice_inner_x.stop - slice_inner_x.start) / (slice_x.stop - slice_x.start) + (
+                    slice_inner_y.stop - slice_inner_y.start) / (slice_y.stop - slice_y.start))
+            mask = RoiMask(roiShape=roi[0], slices=slices, innerR=R)
+        roi_mask_grp.append(mask)
+    return roi_mask_grp
 
 
 def get_circ_mask(size_x, size_y, R=1):
@@ -227,5 +248,3 @@ def get_circ_mask(size_x, size_y, R=1):
 
 def get_annular_mask(size_x, size_y, innerR):
     return np.logical_xor(get_circ_mask(size_x, size_y), get_circ_mask(size_x, size_y, innerR))
-
-
