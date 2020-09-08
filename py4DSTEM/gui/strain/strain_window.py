@@ -4,7 +4,6 @@ import numpy as np
 import sys, os
 import pyqtgraph as pg
 import gc
-
 from .panels import *
 from ..gui_utils import sibling_path, pg_point_roi, LQCollection
 

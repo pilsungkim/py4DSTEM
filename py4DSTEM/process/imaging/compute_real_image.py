@@ -1,24 +1,24 @@
 import numpy as np
-from pyqtgraph.graphicsItems import ROI
-import py4DSTEM.process.virtualimage.mask as mk
-import py4DSTEM.process.utils.constants as ct
+from . import mask as mk
+from ..utils import constants as cs
+from ...file.datastructure import datacube
 
 
-def get_virtual_image(datacube, _detector_mode_type: int, mask: mk.RoiMask, center: tuple):
-    if _detector_mode_type == ct.DetectorModeType.integrate:
+def get_virtual_image(datacube: datacube, _detector_mode_type: int, mask: mk.RoiMask, center: tuple):
+    if _detector_mode_type == cs.DetectorModeType.integrate:
         img, success = get_virtual_image_integrate(datacube, mask)
-    if _detector_mode_type == ct.DetectorModeType.diffX:
+    if _detector_mode_type == cs.DetectorModeType.diffX:
         img, success = get_virtual_image_diffX(datacube, mask, center)
-    if _detector_mode_type == ct.DetectorModeType.diffY:
+    if _detector_mode_type == cs.DetectorModeType.diffY:
         img, success = get_virtual_image_diffY(datacube, mask, center)
-    if _detector_mode_type == ct.DetectorModeType.CoMX:
+    if _detector_mode_type == cs.DetectorModeType.CoMX:
         img, success = get_virtual_image_CoMX(datacube, mask, center)
-    if _detector_mode_type == ct.DetectorModeType.CoMY:
+    if _detector_mode_type == cs.DetectorModeType.CoMY:
         img, success = get_virtual_image_CoMY(datacube, mask, center)
     return img, success
 
 
-def get_virtual_image_integrate(datacube, mask: mk.RoiMask):
+def get_virtual_image_integrate(datacube: datacube, mask: mk.RoiMask):
     try:
         if mask.isRectShape:
             img = np.sum(datacube.data[:, :, mask.slice_x, mask.slice_y], axis=(2, 3))
@@ -29,7 +29,7 @@ def get_virtual_image_integrate(datacube, mask: mk.RoiMask):
         return 0, 0
 
 
-def get_virtual_image_diffX(datacube, mask: mk.RoiMask, center: tuple):
+def get_virtual_image_diffX(datacube: datacube, mask: mk.RoiMask, center: tuple):
     """
     Returns a virtual image as an ndarray, generated from a circular detector in difference
     mode. Also returns a bool indicating success or failure.
@@ -63,7 +63,7 @@ def get_virtual_image_diffX(datacube, mask: mk.RoiMask, center: tuple):
         return 0, 0
 
 
-def get_virtual_image_diffY(datacube, mask: mk.RoiMask, center: tuple):
+def get_virtual_image_diffY(datacube: datacube, mask: mk.RoiMask, center: tuple):
     """
     Returns a virtual image as an ndarray, generated from a circular detector in difference
     mode. Also returns a bool indicating success or failure.
@@ -96,7 +96,7 @@ def get_virtual_image_diffY(datacube, mask: mk.RoiMask, center: tuple):
         return 0, 0
 
 
-def get_virtual_image_CoMX(datacube, mask: mk.RoiMask, center: tuple):
+def get_virtual_image_CoMX(datacube: datacube, mask: mk.RoiMask, center: tuple):
     """
 
     """
@@ -123,7 +123,7 @@ def get_virtual_image_CoMX(datacube, mask: mk.RoiMask, center: tuple):
         return 0, 0
 
 
-def get_virtual_image_CoMY(datacube, mask: mk.RoiMask, center: tuple):
+def get_virtual_image_CoMY(datacube: datacube, mask: mk.RoiMask, center: tuple):
     """
     Returns a virtual image as an ndarray, generated from a rectangular detector, in CoM
     mode. Also returns a bool indicating success or failure.

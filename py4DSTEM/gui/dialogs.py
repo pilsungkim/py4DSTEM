@@ -66,12 +66,10 @@ class ControlPanel(QtWidgets.QWidget):
         self.pushButton_CropData = self.preprocessingTabs.cropTab.pushButton_CropData
         self.pushButton_EditFileMetadata = self.preprocessingTabs.editMetaTab.pushButton_EditFileMetadata
         self.pushButton_EditDirectoryMetadata = self.preprocessingTabs.editMetaTab.pushButton_EditDirectoryMetadata
-        # self.pushButton_SaveFile = self.widget_LoadPreprocessSave.widget.pushButton_SaveFile
-        # self.pushButton_SaveDirectory = self.widget_LoadPreprocessSave.widget.pushButton_SaveDirectory
-        # self.pushButton_LaunchStrain = self.widget_LoadPreprocessSave.widget.pushButton_LaunchStrain
 
         self.scalingTabs = ScalingTabs()
         self.buttonGroup_DiffractionMode = self.scalingTabs.diffractionSpaceTab.buttonGroup_DiffractionMode
+        self.buttonGroup_realMode = self.scalingTabs.realSpaceTab.buttonGroup_RealMode
 
         self.detectorModeTabs = DetectorModeTabs()
         self.radioButton_Integrate = self.detectorModeTabs.diffractionSpaceTab.radioButton_Integrate
@@ -97,8 +95,6 @@ class ControlPanel(QtWidgets.QWidget):
         ############## Create and set layout ###############
         ####################################################
 
-        # layout.addWidget(self.widget_LoadPreprocessSave,0,QtCore.Qt.AlignTop)
-        # layout.addWidget(self.virtualDetectors,0,QtCore.Qt.AlignTop)
         layout.addWidget(self.preprocessingTabs,2)
         layout.addWidget(self.scalingTabs,1)
         layout.addWidget(self.detectorModeTabs,1)
@@ -111,8 +107,6 @@ class ControlPanel(QtWidgets.QWidget):
 
         # Scroll Area Properties
         scrollArea = QtWidgets.QScrollArea()
-        # scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
-        # scrollArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
         scrollArea.setWidgetResizable(True)
         scrollArea.setWidget(scrollableWidget)
         scrollArea.setFrameStyle(QtWidgets.QFrame.NoFrame)
@@ -125,8 +119,8 @@ class ControlPanel(QtWidgets.QWidget):
         self.setLayout(vLayout)
 
         # Set geometry
-        #self.setFixedHeight(600)
-        #self.setFixedWidth(300)
+        # self.setFixedHeight(600)
+        # self.setFixedWidth(300)
 
 
 ############ Control panel sub-widgets ############
@@ -144,17 +138,6 @@ class PreprocessingTabs(QtWidgets.QTabWidget):
         self.addTab(self.binTab, " bin ")
         self.addTab(self.cropTab, " crop ")
         self.addTab(self.editMetaTab, " metadata edit ")
-
-        # layout = QtWidgets.QVBoxLayout()
-        # layout.addLayout(layout_Reshape)
-        # layout.addLayout(layout_CropAndBin)
-        # layout.addLayout(layout_EditMetadata)
-        # layout.setSpacing(0)
-        # layout.setContentsMargins(0,0,0,0)
-
-        # self.setLayout(layout)
-        # self.setFixedWidth(control_panel_width)
-        # self.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed))
 
     class ReshapeTab(QtWidgets.QWidget):
         def __init__(self):
@@ -290,8 +273,10 @@ class ScalingTabs(QtWidgets.QTabWidget):
         QtWidgets.QTabWidget.__init__(self)
 
         self.diffractionSpaceTab = self.DiffractionSpaceTab()
+        self.realSpaceTab = self.RealSpaceTab()
 
         self.addTab(self.diffractionSpaceTab, " Diffraction Space ")
+        self.addTab(self.realSpaceTab, " Real Space ")
 
     class DiffractionSpaceTab(QtWidgets.QWidget):
         def __init__(self):
@@ -320,6 +305,34 @@ class ScalingTabs(QtWidgets.QTabWidget):
             self.buttonGroup_DiffractionMode.setId(self.radioButton_DP_EWPC, 3)
 
             self.setLayout(diffraction_mode_widget_layout)
+
+    class RealSpaceTab(QtWidgets.QWidget):
+        def __init__(self):
+            QtWidgets.QWidget.__init__(self)
+            real_mode_widget_layout = QtWidgets.QVBoxLayout()
+
+            self.radioButton_DP_Raw = QtWidgets.QRadioButton('Raw')
+            self.radioButton_DP_Sqrt = QtWidgets.QRadioButton('Square Root')
+            self.radioButton_DP_Log = QtWidgets.QRadioButton('Logartihm')
+            self.radioButton_DP_EWPC = QtWidgets.QRadioButton('EWPC')
+
+            real_mode_widget_layout.addWidget(self.radioButton_DP_Raw)
+            real_mode_widget_layout.addWidget(self.radioButton_DP_Sqrt)
+            real_mode_widget_layout.addWidget(self.radioButton_DP_Log)
+            real_mode_widget_layout.addWidget(self.radioButton_DP_EWPC)
+
+            self.buttonGroup_RealMode = QtWidgets.QButtonGroup()
+            self.buttonGroup_RealMode.addButton(self.radioButton_DP_Raw)
+            self.buttonGroup_RealMode.addButton(self.radioButton_DP_Sqrt)
+            self.buttonGroup_RealMode.addButton(self.radioButton_DP_Log)
+            self.buttonGroup_RealMode.addButton(self.radioButton_DP_EWPC)
+
+            self.buttonGroup_RealMode.setId(self.radioButton_DP_Raw, 0)
+            self.buttonGroup_RealMode.setId(self.radioButton_DP_Sqrt, 1)
+            self.buttonGroup_RealMode.setId(self.radioButton_DP_Log, 2)
+            self.buttonGroup_RealMode.setId(self.radioButton_DP_EWPC, 3)
+
+            self.setLayout(real_mode_widget_layout)
 
 
 class DetectorModeTabs(QtWidgets.QTabWidget):
@@ -456,6 +469,7 @@ class DetectorShapeWidget(QtWidgets.QWidget):
         self.keyEvent_list = []
         self.enterEvent_list = []
         self.leaveEvent_list = []
+        self.mouseReleaseEvent_list = []
         self.frame = QtWidgets.QFrame()
         self.frame_layout = QtWidgets.QVBoxLayout()
         self.frame.setLayout(self.frame_layout)
@@ -511,12 +525,14 @@ class DetectorShapeWidget(QtWidgets.QWidget):
         self.firstLineText1 = QtWidgets.QDoubleSpinBox()
         self.firstLineText1.setMaximumHeight(25)
         self.firstLineText1.setAlignment(Qt.AlignCenter)
-        # self.firstLineText1.setKeyboardTracking(False)
+        self.firstLineText1.setMinimum(-1000)
+        self.firstLineText1.setMaximum(2000)
 
         self.firstLineText2 = QtWidgets.QDoubleSpinBox()
         self.firstLineText2.setMaximumHeight(25)
         self.firstLineText2.setAlignment(Qt.AlignCenter)
-        # self.firstLineText2.setKeyboardTracking(False)
+        self.firstLineText2.setMinimum(-1000)
+        self.firstLineText2.setMaximum(2000)
 
         self.secondLineLabel = QtWidgets.QLabel("")
         self.secondLineLabel.setMinimumWidth(100)
@@ -526,14 +542,11 @@ class DetectorShapeWidget(QtWidgets.QWidget):
         self.secondLineText1.setMinimum(1)
         self.secondLineText1.setMaximumHeight(25)
         self.secondLineText1.setAlignment(Qt.AlignCenter)
-        # self.secondLineText1.setKeyboardTracking(False)
 
         self.secondLineText2 = QtWidgets.QDoubleSpinBox()
         self.secondLineText2.setMinimum(1)
         self.secondLineText2.setMaximumHeight(25)
-        # self.secondLineText2.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.secondLineText2.setAlignment(Qt.AlignCenter)
-        # self.secondLineText1.setKeyboardTracking(False)
 
         self.bottomGridLayout.addWidget(self.firstLineLabel, 0, 0)
         self.bottomGridLayout.addWidget(self.firstLineText1, 0, 1)
@@ -571,37 +584,38 @@ class DetectorShapeWidget(QtWidgets.QWidget):
         self.checkBox_ToggleHiding.stateChanged.connect(self.bottom.setVisible)
         self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.Fixed)
 
-        self.addEnterEvent(lambda: self.frame.setStyleSheet("QFrame#frame{border: 3px solid #ffff00;}"))
-        self.addLeaveEvent(lambda: self.frame.setStyleSheet("QFrame#frame{border: 3px solid #444a4f;}"))
-
-
     def addKeyEvent(self, func):
         self.keyEvent_list.append(func)
-
     def addEnterEvent(self, func):
         self.enterEvent_list.append(func)
-
     def addLeaveEvent(self, func):
         self.leaveEvent_list.append(func)
+    def addMouseReleaseEvent(self, func):
+        self.mouseReleaseEvent_list.append(func)
 
     def keyReleaseEvent(self, a0: QtGui.QKeyEvent) -> None:
+        super().keyReleaseEvent(a0)
         if a0.key() in (QtCore.Qt.Key_Down,QtCore.Qt.Key_Up,QtCore.Qt.Key_Enter,QtCore.Qt.Key_Return):
             for func in self.keyEvent_list:
                 func()
-
     def enterEvent(self, a0: QtCore.QEvent) -> None:
         super().enterEvent(a0)
         for func in self.enterEvent_list:
             func()
-
     def leaveEvent(self, a0: QtCore.QEvent) -> None:
         super().leaveEvent(a0)
         for func in self.leaveEvent_list:
             func()
+    def mousePressEvent(self, a0: QtGui.QMouseEvent) -> None:
+        super().mouseReleaseEvent(a0)
+        for func in self.mouseReleaseEvent_list:
+            func()
 
 
     def mouseReleaseEvent(self, a0: QtGui.QMouseEvent) -> None:
-        print(a0.source())
+        pass
+    def focusInEvent(self, a0: QtGui.QFocusEvent) -> None:
+        super().focusInEvent(a0)
 
 
 class SaveWidget(QtWidgets.QWidget):
@@ -750,7 +764,6 @@ class TitleBar(QtWidgets.QWidget):
         self.layout.addWidget(self.label_filename, alignment=Qt.AlignLeft)
         self.layout.addWidget(self.window_control,alignment=Qt.AlignRight)
 
-
         self.setMaximumHeight(50)
         self.setContentsMargins(0, 0, 0, 0)
         self.layout.setContentsMargins(0, 0, 0, 0)
@@ -762,6 +775,7 @@ class TitleBar(QtWidgets.QWidget):
         openmenu = filemenu.addMenu('   &open  ')
         self._openRecentMenu = filemenu.addMenu('   &open Recent File  ')
         save_menu = filemenu.addMenu('   &save  ')
+        save_current_image_menu = filemenu.addMenu('   &save_current_image  ')
 
         # OPENMENU
         self.openAuto = QtWidgets.QAction("&auto", self)
@@ -783,13 +797,18 @@ class TitleBar(QtWidgets.QWidget):
         save_menu.addAction(self.save_as_directory)
 
 
+        self.save_diffraction_space = QtWidgets.QAction("&diffraction space", self)
+        self.save_real_space = QtWidgets.QAction("&real space", self)
+        save_current_image_menu.addAction(self.save_diffraction_space)
+        save_current_image_menu.addAction(self.save_real_space)
+
         menubar.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
         return menubar
 
     def addRecentFile(self, filePath):
         # insert recent file to database
         db = database.DBFileList()
-        db.insertOpenFileList(filePath, "not implemented yet")
+        db.insertOpenFileList(filePath, "type:not implemented yet")
         self.addRecentFileMenu()
 
     def addRecentFileMenu(self):
@@ -801,10 +820,16 @@ class TitleBar(QtWidgets.QWidget):
         for file in fileList:
             filePath = file[1]
             qAction = QtWidgets.QAction("&" + filePath, self)
-            self.openRecentFileActionList.append(qAction)
+            # self.openRecentFileActionList.append(qAction)
+            qAction.triggered.connect(self.test(qAction))
+            qAction.triggered.connect(self.update_value(qAction))
             self._openRecentMenu.addAction(qAction)
-            qAction.triggered.connect(lambda: self.mainWindow.load_file(0,filePath=qAction.text()[1:]))
-            qAction.triggered.connect(lambda: self.mainWindow.settings.data_filename.update_value(qAction.text()[1:]))
+
+    def test(self, qAction):
+        return lambda: self.mainWindow.load_file(0, filePath=qAction.text()[1:])
+    def update_value(self, qAction):
+        return lambda: self.mainWindow.settings.data_filename.update_value(qAction.text()[1:])
+
 
     def mouseMoveEvent(self, a0: QtGui.QMouseEvent) -> None:
         if self.window_control.mainWindow.isMaximized():
@@ -849,17 +874,18 @@ class TitleBar(QtWidgets.QWidget):
             self.setContentsMargins(0, 0, 0, 0)
             self.layout.setContentsMargins(0, 0, 0, 0)
             self.layout.setSpacing(0)
-            self.ButtonMin = QtWidgets.QPushButton("-")
+            self.ButtonMin = QtWidgets.QPushButton("─")
             self.ButtonMin.setFixedSize(QtCore.QSize(BUTTON_WIDTH, BUTTON_HEIGHT))
             self.ButtonMin.setObjectName("ButtonMin")
-            self.ButtonMax = QtWidgets.QPushButton("+")
+            # self.ButtonMin.setIcon(QtGui.QIcon("./icons/minimize.png"))
+            self.ButtonMax = QtWidgets.QPushButton("□")
             self.ButtonMax.setFixedSize(QtCore.QSize(BUTTON_WIDTH, BUTTON_HEIGHT))
             self.ButtonMax.setObjectName("ButtonMax")
             self.ButtonRestore = QtWidgets.QPushButton("□")
             self.ButtonRestore.setFixedSize(QtCore.QSize(BUTTON_WIDTH, BUTTON_HEIGHT))
             self.ButtonRestore.setObjectName("ButtonRestore")
             self.ButtonRestore.setVisible(False)
-            self.ButtonClose = QtWidgets.QPushButton("x")
+            self.ButtonClose = QtWidgets.QPushButton("×")
             self.ButtonClose.setFixedSize(QtCore.QSize(BUTTON_WIDTH, BUTTON_HEIGHT))
             self.ButtonClose.setObjectName("ButtonClose")
             self.layout.addWidget(self.ButtonMin)

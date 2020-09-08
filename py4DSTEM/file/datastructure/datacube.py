@@ -6,18 +6,17 @@
 from collections.abc import Sequence
 from tempfile import TemporaryFile
 
-import numpy as np
-import py4DSTEM.process.virtualimage.mask as mk
-import py4DSTEM.process.utils.constants as ct
+
+import py4DSTEM.process.utils.constants as cs
 import numba as nb
 import h5py
 
 import numpy as np
 from .dataobject import DataObject
 from ...process import preprocess
-from ...process.virtualimage_viewer import virtualimage_process as virtualimage
-from ...process.virtualimage_viewer import virtualimage_process2 as virtualimage2
 from ...process.utils import tqdmnd, bin2D
+from ...process.imaging import mask as mk
+from ...process.imaging import compute
 
 class DataCube(DataObject):
 
@@ -113,24 +112,6 @@ class DataCube(DataObject):
             return 0, 0
         except ValueError:
             return 0,0
-
-    # Virtual images -- integrating
-
-    def get_virual_image(self, slices, _detector_shape: int, _detector_mode_type: int):
-        mask = mk.RoiMask(slices, _detector_shape)
-        rs = virtualimage2.get_virtual_image(self,_detector_mode_type, mask)
-        return rs
-
-    def get_virtual_image(self, _detector_mode_type: int, mask: mk.RoiMask, mergedMask: mk.RoiMask = None):
-        rs = virtualimage2.get_virtual_image(self, _detector_mode_type, mask, mergedMask)
-        return rs
-
-    def get_virtual_image_rect_integrate(self,slice_x,slice_y):
-        """
-        Returns a virtual image as an ndarray, generated from a rectangular detector in integration
-        mode. Also returns a bool indicating success or failure.
-        """
-        return self.get_virual_image(slice_x,slice_y,ct.DetectorShape.rectangular,ct.DetectorModeType.integrate)
 
     # def get_virtual_image_circ_integrate(self,slice_x,slice_y):
     #     """

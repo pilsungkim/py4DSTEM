@@ -7,6 +7,7 @@ from os.path import splitext
 from pathlib import Path
 from xml.dom import minidom
 import numpy as np
+from PyQt5.QtWidgets import QWidget
 
 detector_size_x = 128
 detector_size_y = 128
@@ -111,3 +112,8 @@ def get_data_from_raw_file(rawFilePath: str, size: (int, int)):
                         detector_size_x)
     data = np.delete(data, np.s_[detector_size_y::], 2)
     return data
+
+# class sampleSizeDialog(QWidget):
+#     def __init__(self):
+#         QWidget.__init__(self)
+#

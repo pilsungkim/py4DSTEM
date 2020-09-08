@@ -1,6 +1,5 @@
 import numpy as np
-from pyqtgraph.graphicsItems import ROI
-import py4DSTEM.process.virtualimage.mask as mk
+from ..imaging import mask as mk
 import py4DSTEM.process.utils.constants as ct
 
 

@@ -1,14 +1,12 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import copy
-import py4DSTEM.process.utils.constants as ct
-import py4DSTEM.file.datastructure.datacube as datacube
+from ..utils import constants as cs
 import pyqtgraph as pg
 
 
 class RoiMask():
 
-    def __init__(self, slices: tuple, roiShape=None, innerR=0, data=None):
+    def __init__(self, slices: tuple, roiShape=None, innerR=0, data=None, maxSize:tuple=None):
 
         self.slice_x, self.slice_y = slices
         self.size_x = self.slice_x.stop - self.slice_x.start
@@ -16,28 +14,62 @@ class RoiMask():
         self.innerR = innerR
         self.isRectShape = False
         self.isMerged = False
+        self.maxSize = maxSize
 
         # get mask data
-        if roiShape == ct.DetectorShape.rectangular:
+        if roiShape == cs.DetectorShape.rectangular:
             self.data = np.ones((self.size_x, self.size_y), dtype=bool)
-        elif roiShape == ct.DetectorShape.point:
+        elif roiShape == cs.DetectorShape.point:
             self.data = np.ones((1, 1), dtype=bool)
-        elif roiShape == ct.DetectorShape.circular:
+        elif roiShape == cs.DetectorShape.circular:
             self.data = get_circ_mask(self.size_x, self.size_y)
-        elif roiShape == ct.DetectorShape.annular:
+        elif roiShape == cs.DetectorShape.annular:
             self.data = get_annular_mask(self.size_x, self.size_y, self.innerR)
-        elif roiShape == ct.DetectorShape.zero:
+        elif roiShape == cs.DetectorShape.zero:
             self.data = np.zeros((self.size_x, self.size_y), dtype=bool)
         elif roiShape is None:
             self.data = data
 
+        # trim the data to datacube size
+
+
         # isRectShape
-        if roiShape in (ct.DetectorShape.rectangular, ct.DetectorShape.point):
+        if roiShape in (cs.DetectorShape.rectangular, cs.DetectorShape.point):
             self.isRectShape = True
 
         # is it merged mask?
         if roiShape is None:
             self.isMerged = True
+
+    def trim_data_to_image(self):
+        if self.maxSize is not None:
+            max_x, max_y = self.maxSize
+            x_start = self.slice_x.start
+            y_start = self.slice_y.start
+            x_stop = self.slice_x.stop
+            y_stop = self.slice_y.stop
+            if self.slice_x.start < 0 :
+                x_start = 0
+            if self.slice_x.stop < 0 :
+                x_stop = 0
+            if self.slice_y.start < 0 :
+                y_start = 0
+            if self.slice_y.stop < 0 :
+                y_stop = 0
+            if self.slice_x.stop > max_x :
+                x_stop = max_x
+            if self.slice_x.start > max_x :
+                x_start = max_x
+            if self.slice_y.stop > max_y :
+                y_stop = max_y
+            if self.slice_y.start > max_y :
+                y_start = max_y
+            self.slice_x = slice(x_start, x_stop)
+            self.slice_y = slice(y_start, y_stop)
+            self.size_x = self.slice_x.stop - self.slice_x.start
+            self.size_y = self.slice_y.stop - self.slice_y.start
+            self.data = self.data[:self.size_x, :self.size_y]
+        return self
 
     def getCenter(self):
         grid_y, grid_x = np.meshgrid(
@@ -53,6 +85,9 @@ class RoiMask():
         crop mask when get out of image boundary
         """
         # todo
+
+    def count_mask_pixel(self):
+        return np.sum(self.data)
 
 
 class RoiMaskList(list):
@@ -215,29 +250,35 @@ def get_compound_mask_list(mask_list: list):
     return compound_mask
 
 
-def get_mask_grp_from_rois(detector_grp: list, dc: datacube, diffractionImageItem: pg.ImageView):
+def get_mask_grp_from_rois(detector_grp: list, diffractionImageItem: pg.ImageView, diffractionSpace=True):
 
     roi_mask_grp = []
     for dtt in detector_grp:
         shape_type = dtt.shape_type
         rois = dtt.rois
-        slices, transforms = dtt.rois[0].getArraySlice(dc.data[0, 0, :, :],
-                                                  diffractionImageItem)
-        if shape_type in (ct.DetectorShape.rectangular, ct.DetectorShape.circular):
-            mask = RoiMask(roiShape=shape_type, slices=slices)
-        elif shape_type is ct.DetectorShape.point:
+
+        if diffractionSpace:
+            slices, transforms = dtt.rois[0].getArraySlice(diffractionImageItem.image,
+                                                           diffractionImageItem)
+        else:
+            slices, transforms = dtt.rois[0].getArraySlice(diffractionImageItem.image,
+                                                           diffractionImageItem)
+
+        if shape_type in (cs.DetectorShape.rectangular, cs.DetectorShape.circular):
+            mask = RoiMask(roiShape=shape_type, slices=slices, maxSize=diffractionImageItem.image.shape)
+        elif shape_type is cs.DetectorShape.point:
             x = np.int(np.ceil(rois[0].x()))
             y = np.int(np.ceil(rois[0].y()))
             slices = (slice(x, x + 1), slice(y, y + 1))
-            mask = RoiMask(roiShape=shape_type, slices=slices)
-        elif shape_type is ct.DetectorShape.annular:
+            mask = RoiMask(roiShape=shape_type, slices=slices, maxSize=diffractionImageItem.image.shape)
+        elif shape_type is cs.DetectorShape.annular:
             slice_x, slice_y = slices
-            slices_inner, transforms = rois[1].getArraySlice(dc.data[0, 0, :, :],
+            slices_inner, transforms = rois[1].getArraySlice(diffractionImageItem.image,
                                                             diffractionImageItem)
             slice_inner_x, slice_inner_y = slices_inner
             R = 0.5 * ((slice_inner_x.stop - slice_inner_x.start) / (slice_x.stop - slice_x.start) + (
                     slice_inner_y.stop - slice_inner_y.start) / (slice_y.stop - slice_y.start))
-            mask = RoiMask(roiShape=shape_type, slices=slices, innerR=R)
+            mask = RoiMask(roiShape=shape_type, slices=slices, innerR=R, maxSize=diffractionImageItem.image.shape)
         roi_mask_grp.append(mask)
     return roi_mask_grp
 

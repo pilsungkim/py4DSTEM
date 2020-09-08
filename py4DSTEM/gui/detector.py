@@ -5,7 +5,6 @@ from .gui_utils import pg_point_roi
 from PyQt5.QtCore import Qt
 
 
-# is name Detector appropriate?
 class DetectorGroup(list):
     def __init__(self, viewer, imageView:pg.ImageView, layout_to_put_widget, widget=DetectorShapeWidget):
         self.viewer = viewer
@@ -13,8 +12,6 @@ class DetectorGroup(list):
         self.layout_to_put_widget = layout_to_put_widget
         self.numCount = 1
         self.widget = widget
-        # self.roiSignalBinding = roiSignalBinding
-        # self.widgetSignalBiding = widgetSignalBiding
 
     def addDetector(self, shape_type):
         rois = self.get_rois(shape_type)
@@ -30,16 +27,15 @@ class DetectorGroup(list):
 
         detector = Detector(init_name, detector_shape_control_widget, rois, shape_type)
         detector.roi_to_dialog_update()
-        # self.roiSignalBinding(detector)
-        # self.widgetSignalBinding(detector)
         self.append(detector)
         return detector
-
 
     def deleteDetector(self, Detector):
         for roi in Detector.rois:
             self.imageView.scene.removeItem(roi)
         Detector.controlWidget.close()
+        if Detector in self:
+            self.remove(Detector)
 
     def deleteAll(self):
         while len(self) > 0:
@@ -85,39 +81,6 @@ class DetectorGroup(list):
 
         return rois
 
-    # def roiSignalBinding(self, dtt):
-    #     if len(dtt.rois) == 1:  # Rect, Circular, Point
-    #         dtt.rois[0].sigRegionChangeFinished.connect(self.viewer.update_real_space_view)
-    #     else:  # Annular
-    #         roi_outer = dtt.rois[0]
-    #         roi_inner = dtt.rois[1]
-    #         roi_outer.sigRegionChangeFinished.connect(
-    #             lambda: update_annulus_pos(roi_inner, roi_outer))
-    #         roi_outer.sigRegionChangeFinished.connect(
-    #             lambda: update_annulus_radii(roi_inner, roi_outer))
-    #         roi_inner.sigRegionChangeFinished.connect(
-    #             lambda: update_annulus_radii(roi_inner, roi_outer))
-    #
-    # def widgetSignalBinding(self, dtt):
-    #     dtt.controlWidget.delButton.clicked.connect(lambda: self.deleteShape(dtt))
-    #     # virtual_detector_shape_control_widget.firstLineText1.valueChanged.connect(self.update_roi)
-    #     # virtual_detector_shape_control_widget.firstLineText2.valueChanged.connect(self.update_roi)
-    #     # virtual_detector_shape_control_widget.secondLineText1.valueChanged.connect(self.update_roi)
-    #     # virtual_detector_shape_control_widget.secondLineText2.valueChanged.connect(self.update_roi)
-    #     dtt.controlWidget.addKeyEvent(self.viewer.update_roi)
-
-    def get_by_name(self):
-        pass
-
-    def get_by_id(self):
-        pass
-
-    def get_by_widget(self):
-        pass
-
-    def get_by_roi(self):
-        pass
-
 
 class Detector:
     def __init__(self, name:str, controlWidget:DetectorShapeWidget, rois:pg.ROI, shape_type:str):
@@ -125,6 +88,21 @@ class Detector:
         self.controlWidget = controlWidget
         self.rois = rois
         self.shape_type = shape_type
+        self.selected = False
+
+        # todo
+        self.color = ""
+        self.intensityRatio = ""
+
+        if shape_type == cs.DetectorShape.annular:
+            roi_outer = self.rois[0]
+            roi_inner = self.rois[1]
+            roi_outer.sigRegionChangeFinished.connect(
+                lambda: self.update_annulus_pos(roi_inner, roi_outer))
+            roi_outer.sigRegionChangeFinished.connect(
+                lambda: self.update_annulus_radii(roi_inner, roi_outer))
+            # roi_inner.sigRegionChangeFinished.connect(
+            #     lambda: self.update_annulus_radii(roi_inner, roi_outer))
 
     def dialog_to_roi_update(self):
         self.updating_roi = True
@@ -168,18 +146,16 @@ class Detector:
         else:
             state['pos'] = (x0, y0)
 
-        flag = True
         if state['pos'][0] == prev_state['pos'][0] and \
                 state['pos'][1] == prev_state['pos'][1] and \
                 state['size'][0] == prev_state['size'][0] and \
                 state['size'][1] == prev_state['size'][1]:
-            flag = False
-        if flag:
+            pass
+        else:
             roi.setState(state)
         self.updating_roi = False
 
     def roi_to_dialog_update(self):
-
         roi: pg.ROI = self.rois[0]
         shape_type = self.shape_type
         controlwidget = self.controlWidget
@@ -221,22 +197,38 @@ class Detector:
             controlwidget.firstLineText1.setValue(x0)
             controlwidget.firstLineText2.setValue(y0)
 
-def update_annulus_pos(self,inner,outer):
-    """
-    Function to keep inner and outer rings of annulus aligned.
-    """
-    R_outer = outer.size().x()/2
-    R_inner = inner.size().x()/2
-    # Only outer annulus is draggable; when it moves, update position of inner annulus
-    x0 = outer.pos().x() + R_outer
-    y0 = outer.pos().y() + R_outer
-    inner.setPos(x0-R_inner, y0-R_inner)
+    def select(self):
+        self.controlWidget.frame.setStyleSheet("QFrame#frame{border: 3px solid #ff0000;}")
+        self.rois[0].setPen(color='r')
+        self.rois[0].hoverPen = pg.mkPen(color='r') # your pyqtgraph should be latest version
+        self.selected = True
 
-def update_annulus_radii(self,inner,outer):
-    R_outer = outer.size().x()/2
-    R_inner = inner.size().x()/2
-    if R_outer < R_inner:
+    def unselect(self):
+        self.controlWidget.frame.setStyleSheet("QFrame#frame{border: 3px solid #444a4f;}")
+        self.rois[0].setPen(color='g')
+        self.rois[0].hoverPen = pg.mkPen(color='y')
+        self.selected = False
+
+    def update_annulus_pos(self):
+        """
+        Function to keep inner and outer rings of annulus aligned.
+        """
+        outer = self.rois[0]
+        inner = self.rois[1]
+        R_outer = outer.size().x() / 2
+        R_inner = inner.size().x() / 2
+        # Only outer annulus is draggable; when it moves, update position of inner annulus
         x0 = outer.pos().x() + R_outer
         y0 = outer.pos().y() + R_outer
-        outer.setSize(2*R_inner+6)
-        outer.setPos(x0-R_inner-3, y0-R_inner-3)
+        inner.setPos(x0 - R_inner, y0 - R_inner)
+
+    def update_annulus_radii(self):
+        outer = self.rois[0]
+        inner = self.rois[1]
+        R_outer = outer.size().x() / 2
+        R_inner = inner.size().x() / 2
+        if R_outer < R_inner:
+            x0 = outer.pos().x() + R_outer
+            y0 = outer.pos().y() + R_outer
+            outer.setSize(2 * R_inner + 6)
+            outer.setPos(x0 - R_inner - 3, y0 - R_inner - 3)
