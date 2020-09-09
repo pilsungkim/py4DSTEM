@@ -111,9 +111,9 @@ def get_data_from_raw_file(rawFilePath: str, size: (int, int)):
                         detector_size_y + image_gap_y,
                         detector_size_x)
     data = np.delete(data, np.s_[detector_size_y::], 2)
+    data = data.transpose(1,0,2,3)
     return data
 
 # class sampleSizeDialog(QWidget):
 #     def __init__(self):
 #         QWidget.__init__(self)
-#

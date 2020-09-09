@@ -25,6 +25,11 @@ def get_virtual_image(datacube: datacube, masks: list, integration_mode: cs.Dete
                 rs += img
     return rs, success
 
+def get_virtual_image_color(datacube: datacube, detectors: list, integration_mode: cs.DetectorModeType,diffractionSpace):
+    # mask = detector.create_roi_mask()
+    #
+    pass
+
 
 def get_diffraction_image(datacube: datacube, masks: list):
     # only average now #

@@ -232,3 +232,4 @@ class Detector:
             y0 = outer.pos().y() + R_outer
             outer.setSize(2 * R_inner + 6)
             outer.setPos(x0 - R_inner - 3, y0 - R_inner - 3)
+
