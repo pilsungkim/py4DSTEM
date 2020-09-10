@@ -905,7 +905,8 @@ class QtWidget_Key(QtWidgets.QWidget):
 
         if e.key() not in (QtCore.Qt.Key_Left, QtCore.Qt.Key_Right, QtCore.Qt.Key_Up, QtCore.Qt.Key_Down):
             return
-
+        if isinstance(self.focusWidget(), QtWidgets.QDoubleSpinBox):
+            return
         if hasattr(self.dataViewer, 'selected_detector'):
             roi_state = self.dataViewer.selected_detector.rois[0].saveState()
             x0, y0 = roi_state['pos']
