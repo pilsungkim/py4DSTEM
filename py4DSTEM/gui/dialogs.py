@@ -494,14 +494,19 @@ class DetectorShapeWidget(QtWidgets.QWidget):
         self.titlebar_layout.setContentsMargins(0,0,0,0)
         self.titlebar.setLayout(self.titlebar_layout)
 
+        # Hide Toggle #
+        self.hide_checkBox = QtWidgets.QCheckBox()
+        self.titlebar_layout.addWidget(self.hide_checkBox)
+
         # Shape Name #
         self.shapeName = QtWidgets.QLabel("Rectangular mask")
         self.shapeName.setFont(normalFont)
         self.shapeName.setAlignment(Qt.AlignLeft)
         self.titlebar_layout.addWidget(self.shapeName, 2)
 
-        self.checkBox_ToggleHiding = QtWidgets.QCheckBox()
-        self.titlebar_layout.addWidget(self.checkBox_ToggleHiding, alignment=Qt.AlignRight)
+        # More Settings CheckBox #
+        self.moreSetting_checkBox = QtWidgets.QCheckBox()
+        self.titlebar_layout.addWidget(self.moreSetting_checkBox, alignment=Qt.AlignRight)
         # Change hide/show checkboxes to triangles
         # self.titlebar.setStyleSheet(
         #     "background-color: #000000;"
@@ -519,8 +524,6 @@ class DetectorShapeWidget(QtWidgets.QWidget):
         # Del button #
         self.delButton = QtWidgets.QPushButton("Del")
         self.titlebar_layout.addWidget(self.delButton)
-
-
 
         self.frame_layout.addWidget(self.titlebar)
 
@@ -601,7 +604,7 @@ class DetectorShapeWidget(QtWidgets.QWidget):
 
 
         self.bottom.setVisible(False)
-        self.checkBox_ToggleHiding.stateChanged.connect(self.bottom.setVisible)
+        self.moreSetting_checkBox.stateChanged.connect(self.bottom.setVisible)
         self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.Fixed)
 
     def addKeyEvent(self, func):

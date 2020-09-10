@@ -94,13 +94,17 @@ class Detector:
         self.imageView = imageView.getImageItem()
         self.roiMask = None
 
-        # todo
         self.color = QColor(0, 255, 0)
         self.color_r = self.color.red()
         self.color_g = self.color.green()
         self.color_b = self.color.blue()
         self.color_name = self.color.name()
         self.intensityRatio = None
+
+        self.hide = False
+        self.intensity = 1
+
+
 
         if shape_type == cs.DetectorShape.annular:
             roi_outer = self.rois[0]
@@ -114,6 +118,7 @@ class Detector:
 
         self.updateColor()
         self.controlWidget.colorButton.clicked.connect(self.openColor)
+        self.controlWidget.hide_checkBox.clicked.connect(self.hideButtonEvent)
 
     def openColor(self):
         self.color = self.controlWidget.colorDialog.getColor(initial=self.color)
@@ -269,3 +274,16 @@ class Detector:
             y0 = outer.pos().y() + R_outer
             outer.setSize(2 * R_inner + 6)
             outer.setPos(x0 - R_inner - 3, y0 - R_inner - 3)
+
+    def hideButtonEvent(self):
+        if self.controlWidget.hide_checkBox.isChecked():
+            pen = pg.mkPen(color=self.color, width=1, style=Qt.DotLine)
+            self.rois[0].setPen(pen)
+            self.hide = True
+        else:
+            self.rois[0].setPen(color=self.color)
+            self.hide = False
+        # update view
+        state = self.rois[0].saveState()
+        self.rois[0].setState(state)
+

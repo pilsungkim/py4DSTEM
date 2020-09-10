@@ -28,6 +28,8 @@ def get_virtual_image(datacube: datacube, masks: list, integration_mode: cs.Dete
 def get_virtual_image_color(datacube: datacube, detectors: list):
     integrated_img = None
     for detector in detectors:
+        if detector.hide:
+            continue
         mask = detector.create_roi_mask()
         mask.trim_data_to_image()
         img, rs = vp.get_virtual_image(datacube, 0, mask, None)
@@ -75,6 +77,8 @@ def get_diffraction_image_color(datacube: datacube, detectors: list):
     integrated_img = None
     pixel_count = 0
     for detector in detectors:
+        if detector.hide:
+            continue
         mask = detector.create_roi_mask()
         mask.trim_data_to_image()
         img, rs = di.get_diffraction_image(datacube,mask)
