@@ -170,7 +170,7 @@ def get_compound_mask_list(mask_list: list):
 def get_mask_grp_from_rois(detector_grp: list, imageView: pg.ImageView, diffractionSpace=True):
 
     roi_mask_grp = []
-    for dtt in detector_grp:
+    for dtt in [detector for detector in detector_grp if not detector.hide]:
         shape_type = dtt.shape_type
         rois = dtt.rois
 

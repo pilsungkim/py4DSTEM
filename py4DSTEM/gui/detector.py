@@ -104,7 +104,12 @@ class Detector:
         self.hide = False
         self.intensity = 1
 
-
+        self.penState = [None] * 4
+        self.pen = [None] * 4
+        self.penState[0] = False # Select
+        self.penState[1] = False # Hide
+        self.penState[2] = False # Hover
+        self.penState[3] = True  # Normal
 
         if shape_type == cs.DetectorShape.annular:
             roi_outer = self.rois[0]
@@ -120,6 +125,37 @@ class Detector:
         self.controlWidget.colorButton.clicked.connect(self.openColor)
         self.controlWidget.hide_checkBox.clicked.connect(self.hideButtonEvent)
 
+    def updatePenSetting(self):
+        self.pen[0] = pg.mkPen(color=QColor(255, 0, 0), width=2, style=Qt.DashLine)
+        self.pen[1] = pg.mkPen(color=self.color, width=1, style=Qt.DotLine)
+        self.pen[2] = pg.mkPen(color=QColor(255, 255, 0), width=2, style=Qt.SolidLine)
+        self.pen[3] = pg.mkPen(color=self.color)
+
+        for i in range(len(self.pen)):
+            if self.penState[i]:
+                self.rois[0].setPen(self.pen[i])
+                break
+
+    def updatePen(self, stateNum:int, condition:bool):
+        self.penState[stateNum] = condition
+        for i in range(stateNum):
+            if self.penState[i]:
+                return
+
+        # Get Pen #
+        if condition:
+            pen = self.pen[stateNum]
+        else:
+            for i in range(stateNum, len(self.penState)):
+                if self.penState[i]:
+                    pen = self.pen[i]
+                    break
+
+        # set Pen #
+        self.rois[0].setPen(pen)
+        if self.shape_type == cs.DetectorShape.annular:
+            self.rois[1].setPen(pen)
+
     def openColor(self):
         self.color = self.controlWidget.colorDialog.getColor(initial=self.color)
         self.color_r = self.color.red()
@@ -132,13 +168,12 @@ class Detector:
         self.controlWidget.colorButton.setStyleSheet("QWidget#colorButton { background-color: %s }" % self.color_name)
 
         # Set ROI Color
-        self.rois[0].setPen(color=self.color)
-        if self.shape_type == cs.DetectorShape.annular:
-            self.rois[1].setPen(color=self.color)
+        self.updatePenSetting()
 
         # update view
         state = self.rois[0].saveState()
         self.rois[0].setState(state)
+
 
 
     def create_roi_mask(self):
@@ -240,15 +275,14 @@ class Detector:
 
     def selectEvent(self):
         self.controlWidget.frame.setStyleSheet("QFrame#frame{border: 3px solid #ff0000;}")
-        pen = pg.mkPen(color=QColor(255, 0, 0), width=2, style=Qt.DashLine)
-        self.rois[0].setPen(pen)
-        self.rois[0].hoverPen = pen # your pyqtgraph should be latest version
+        self.updatePen(0, True)
+        self.rois[0].hoverPen = self.pen[0] # your pyqtgraph should be latest version
         self.selected = True
 
     def unselectEvent(self):
         self.controlWidget.frame.setStyleSheet("QFrame#frame{border: 3px solid #444a4f;}")
-        self.rois[0].setPen(color=self.color)
-        self.rois[0].hoverPen = pg.mkPen(color='y')
+        self.updatePen(0, False)
+        self.rois[0].hoverPen = self.pen[2]
         self.selected = False
 
     def update_annulus_pos(self):
@@ -277,11 +311,10 @@ class Detector:
 
     def hideButtonEvent(self):
         if self.controlWidget.hide_checkBox.isChecked():
-            pen = pg.mkPen(color=self.color, width=1, style=Qt.DotLine)
-            self.rois[0].setPen(pen)
+            self.updatePen(1, True)
             self.hide = True
         else:
-            self.rois[0].setPen(color=self.color)
+            self.updatePen(1, False)
             self.hide = False
         # update view
         state = self.rois[0].saveState()

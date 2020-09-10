@@ -6,6 +6,8 @@ import numpy as np
 
 
 def get_virtual_image(datacube: datacube, masks: list, integration_mode: cs.DetectorModeType):
+    if len(masks) == 0:
+        return 0, 0
     masks = [a.trim_data_to_image() for a in masks]
     compound_mask = mk.get_compound_mask_list(masks)
     merged_mask = mk.merge(compound_mask)
@@ -25,7 +27,10 @@ def get_virtual_image(datacube: datacube, masks: list, integration_mode: cs.Dete
                 rs += img
     return rs, success
 
+
 def get_virtual_image_color(datacube: datacube, detectors: list):
+    if len(detectors) == 0:
+        return 0, 0
     integrated_img = None
     for detector in detectors:
         if detector.hide:
@@ -49,6 +54,8 @@ def get_virtual_image_color(datacube: datacube, detectors: list):
 
 def get_diffraction_image(datacube: datacube, masks: list):
     # only average now #
+    if len(masks) == 0:
+        return 0, 0
     masks = [a.trim_data_to_image() for a in masks]
     compound_mask = mk.get_compound_mask_list(masks)
     # merged_mask = mk.merge(compound_mask)
@@ -74,6 +81,8 @@ def get_diffraction_image(datacube: datacube, masks: list):
 
 
 def get_diffraction_image_color(datacube: datacube, detectors: list):
+    if len(detectors) == 0:
+        return 0, 0
     integrated_img = None
     pixel_count = 0
     for detector in detectors:
