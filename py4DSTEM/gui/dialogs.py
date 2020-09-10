@@ -79,6 +79,10 @@ class ControlPanel(QtWidgets.QWidget):
         self.radioButton_CoMY = self.detectorModeTabs.diffractionSpaceTab.radioButton_CoMY
         self.buttonGroup_DetectorMode = self.detectorModeTabs.diffractionSpaceTab.buttonGroup_DetectorMode
 
+        self.settingTabs = SettingTabs()
+        self.checkBox_color = self.settingTabs.settingTab.color_checkbox
+        self.checkBox_update = self.settingTabs.settingTab.update_checkbox
+
         self.detectorShapeTabs = DetectorShapeTabs()
         self.pushBtn_rect_diffractionSpace = self.detectorShapeTabs.diffractionSpaceTab.pushButton_RectDetector
         self.pushBtn_circ_diffractionSpace = self.detectorShapeTabs.diffractionSpaceTab.pushButton_CircDetector
@@ -98,6 +102,7 @@ class ControlPanel(QtWidgets.QWidget):
         layout.addWidget(self.preprocessingTabs,2)
         layout.addWidget(self.scalingTabs,1)
         layout.addWidget(self.detectorModeTabs,1)
+        layout.addWidget(self.settingTabs,0.5)
         layout.addWidget(self.detectorShapeTabs,2)
         layout.addWidget(self.analysisTabs,0.5)
         layout.setSpacing(0)
@@ -446,21 +451,23 @@ class DetectorShapeTabs(QtWidgets.QTabWidget):
         pass
 
 
-class AnalysisTabs(QtWidgets.QTabWidget):
+class SettingTabs(QtWidgets.QTabWidget):
     def __init__(self):
         QtWidgets.QTabWidget.__init__(self)
 
-        self.analysisTab = self.AnalysisTab()
+        self.settingTab = self.SettingTab()
 
-        self.addTab(self.analysisTab, "analysis")
+        self.addTab(self.settingTab, "Setting")
 
-    class AnalysisTab(QtWidgets.QWidget):
+    class SettingTab(QtWidgets.QWidget):
         def __init__(self):
             QtWidgets.QWidget.__init__(self)
-            self.layout = QtWidgets.QHBoxLayout()
+            self.layout = QtWidgets.QVBoxLayout()
             self.setLayout(self.layout)
-            self.singleCrystal_pushbutton = QtWidgets.QPushButton("Single Crystal")
-            self.layout.addWidget(self.singleCrystal_pushbutton)
+            self.color_checkbox = QtWidgets.QCheckBox("Color (only sum)")
+            self.update_checkbox = QtWidgets.QCheckBox("real time update")
+            self.layout.addWidget(self.color_checkbox)
+            self.layout.addWidget(self.update_checkbox)
 
 
 class DetectorShapeWidget(QtWidgets.QWidget):
@@ -470,6 +477,7 @@ class DetectorShapeWidget(QtWidgets.QWidget):
         self.enterEvent_list = []
         self.leaveEvent_list = []
         self.mouseReleaseEvent_list = []
+        self.colorChangedEvent_list = []
         self.frame = QtWidgets.QFrame()
         self.frame_layout = QtWidgets.QVBoxLayout()
         self.frame.setLayout(self.frame_layout)
@@ -485,6 +493,8 @@ class DetectorShapeWidget(QtWidgets.QWidget):
         self.titlebar_layout = QtWidgets.QHBoxLayout()
         self.titlebar_layout.setContentsMargins(0,0,0,0)
         self.titlebar.setLayout(self.titlebar_layout)
+
+        # Shape Name #
         self.shapeName = QtWidgets.QLabel("Rectangular mask")
         self.shapeName.setFont(normalFont)
         self.shapeName.setAlignment(Qt.AlignLeft)
@@ -500,6 +510,13 @@ class DetectorShapeWidget(QtWidgets.QWidget):
         #     "QCheckBox::indicator:unchecked { image:url(./gui/icons/arrow_closed.png)}"
         # )
 
+        # Color Button #
+        self.colorButton = QtWidgets.QPushButton("color")
+        self.colorButton.setObjectName("colorButton")
+        self.titlebar_layout.addWidget(self.colorButton)
+        self.colorDialog = QtWidgets.QColorDialog()
+
+        # Del button #
         self.delButton = QtWidgets.QPushButton("Del")
         self.titlebar_layout.addWidget(self.delButton)
 
@@ -517,7 +534,8 @@ class DetectorShapeWidget(QtWidgets.QWidget):
         self.frame.setStyleSheet("QFrame#frame{border: 3px solid #444a4f;}")
                                  # "QFrame#frame:hover{border: 3px solid #FFFF00;}")
 
-        # BottomGrid
+
+        # BottomGrid #
         self.firstLineLabel = QtWidgets.QLabel("x , y")
         self.firstLineLabel.setAlignment(Qt.AlignCenter)
         self.firstLineLabel.setMinimumWidth(100)
@@ -580,6 +598,8 @@ class DetectorShapeWidget(QtWidgets.QWidget):
             self.secondLineText1.hide()
             self.secondLineText2.hide()
 
+
+
         self.bottom.setVisible(False)
         self.checkBox_ToggleHiding.stateChanged.connect(self.bottom.setVisible)
         self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.Fixed)
@@ -592,6 +612,7 @@ class DetectorShapeWidget(QtWidgets.QWidget):
         self.leaveEvent_list.append(func)
     def addMouseReleaseEvent(self, func):
         self.mouseReleaseEvent_list.append(func)
+
 
     def keyReleaseEvent(self, a0: QtGui.QKeyEvent) -> None:
         super().keyReleaseEvent(a0)
@@ -611,12 +632,27 @@ class DetectorShapeWidget(QtWidgets.QWidget):
         for func in self.mouseReleaseEvent_list:
             func()
 
-
     def mouseReleaseEvent(self, a0: QtGui.QMouseEvent) -> None:
         pass
     def focusInEvent(self, a0: QtGui.QFocusEvent) -> None:
         super().focusInEvent(a0)
 
+
+class AnalysisTabs(QtWidgets.QTabWidget):
+    def __init__(self):
+        QtWidgets.QTabWidget.__init__(self)
+
+        self.analysisTab = self.AnalysisTab()
+
+        self.addTab(self.analysisTab, "analysis")
+
+    class AnalysisTab(QtWidgets.QWidget):
+        def __init__(self):
+            QtWidgets.QWidget.__init__(self)
+            self.layout = QtWidgets.QHBoxLayout()
+            self.setLayout(self.layout)
+            self.singleCrystal_pushbutton = QtWidgets.QPushButton("Single Crystal")
+            self.layout.addWidget(self.singleCrystal_pushbutton)
 
 class SaveWidget(QtWidgets.QWidget):
     """

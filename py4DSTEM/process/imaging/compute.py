@@ -25,10 +25,24 @@ def get_virtual_image(datacube: datacube, masks: list, integration_mode: cs.Dete
                 rs += img
     return rs, success
 
-def get_virtual_image_color(datacube: datacube, detectors: list, integration_mode: cs.DetectorModeType,diffractionSpace):
-    # mask = detector.create_roi_mask()
-    #
-    pass
+def get_virtual_image_color(datacube: datacube, detectors: list):
+    integrated_img = None
+    for detector in detectors:
+        mask = detector.create_roi_mask()
+        mask.trim_data_to_image()
+        img, rs = vp.get_virtual_image(datacube, 0, mask, None)
+        if rs == 1:
+            img_r = img * detector.color_r / 255
+            img_g = img * detector.color_g / 255
+            img_b = img * detector.color_b / 255
+            img = np.dstack((img_r, img_g, img_b))
+            if integrated_img is None:
+                integrated_img = img
+            else :
+                integrated_img += img
+        else:
+            return 0,0
+    return integrated_img, 1
 
 
 def get_diffraction_image(datacube: datacube, masks: list):
@@ -57,6 +71,30 @@ def get_diffraction_image(datacube: datacube, masks: list):
     return rs, success
 
 
+def get_diffraction_image_color(datacube: datacube, detectors: list):
+    integrated_img = None
+    pixel_count = 0
+    for detector in detectors:
+        mask = detector.create_roi_mask()
+        mask.trim_data_to_image()
+        img, rs = di.get_diffraction_image(datacube,mask)
+        pixel_count += np.sum(mask.data)
+        if rs == 1:
+            img_r = img * detector.color_r / 255
+            img_g = img * detector.color_g / 255
+            img_b = img * detector.color_b / 255
+            img = np.dstack((img_r, img_g, img_b))
+            if integrated_img is None:
+                integrated_img = img
+            else:
+                integrated_img += img
+        else:
+            return 0, 0
+    if pixel_count != 0:
+        img = img / pixel_count
+    return integrated_img, 1
+
+
 def scaling(img, mode, datacube: datacube):
     if mode == 1:
         # sqrt mode
@@ -68,6 +106,10 @@ def scaling(img, mode, datacube: datacube):
     elif mode == 3:
         # EWPC mode
         h = np.hanning(datacube.Q_Nx)[:, np.newaxis] @ np.hanning(datacube.Q_Ny)[np.newaxis, :]
-        img = np.abs(np.fft.fftshift(np.fft.fft2(np.log(
-            (h * (img - np.min(img))) + 1)))) ** 2
+        if len(img.shape) == 2:
+            img = np.abs(np.fft.fftshift(np.fft.fft2(np.log(
+                (h * (img - np.min(img))) + 1)))) ** 2
+        elif len(img.shape) == 3:
+            img = np.abs(np.fft.fftshift(np.fft.fft2(np.log(
+                (np.dstack((h,h,h)) * (img - np.min(img))) + 1)))) ** 2
     return img

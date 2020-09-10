@@ -36,7 +36,7 @@ def get_virtual_image_diffX(datacube: datacube, mask: mk.RoiMask, center: tuple)
     """
     try:
 
-        if center is not None:
+        if center is None:
             center_x, center_y = mask.getCenter()
         else:
             center_x, center_y = center
@@ -47,7 +47,7 @@ def get_virtual_image_diffX(datacube: datacube, mask: mk.RoiMask, center: tuple)
             img = np.ndarray.astype(
                 np.sum(datacube.data[:, :, slice_left, mask.slice_y], axis=(2, 3)) -
                 np.sum(datacube.data[:, :, slice_right, mask.slice_y], axis=(2, 3)),
-                'int64'
+                'float64'
             )
         else:
             img = np.ndarray.astype(
@@ -57,7 +57,7 @@ def get_virtual_image_diffX(datacube: datacube, mask: mk.RoiMask, center: tuple)
                 np.sum(datacube.data[:, :, slice_right, mask.slice_y] * mask.data[slice_right.start - slice_right.stop:,
                                                                         :],
                        axis=(2, 3)),
-                'int64')
+                'float64')
         return img, 1
     except ValueError:
         return 0, 0
@@ -81,7 +81,7 @@ def get_virtual_image_diffY(datacube: datacube, mask: mk.RoiMask, center: tuple)
             img = np.ndarray.astype(
                 np.sum(datacube.data[:, :, mask.slice_x, slice_left], axis=(2, 3)) -
                 np.sum(datacube.data[:, :, mask.slice_x, slice_right], axis=(2, 3)),
-                'int64'
+                'float64'
             )
         else:
             img = np.ndarray.astype(
@@ -90,7 +90,7 @@ def get_virtual_image_diffY(datacube: datacube, mask: mk.RoiMask, center: tuple)
                 np.sum(datacube.data[:, :, mask.slice_x, slice_right] * mask.data[:,
                                                                         slice_right.start - slice_right.stop:],
                        axis=(2, 3)),
-                'int64')
+                'float64')
         return img, 1
     except ValueError:
         return 0, 0

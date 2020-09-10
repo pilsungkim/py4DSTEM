@@ -3,6 +3,8 @@ import pyqtgraph as pg
 from py4DSTEM.gui.dialogs import DetectorShapeWidget
 from .gui_utils import pg_point_roi
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor
+from py4DSTEM.process.imaging import mask as mk
 
 
 class DetectorGroup(list):
@@ -25,7 +27,7 @@ class DetectorGroup(list):
                                                detector_shape_control_widget,
                                                alignment=Qt.AlignTop)
 
-        detector = Detector(init_name, detector_shape_control_widget, rois, shape_type)
+        detector = Detector(init_name, detector_shape_control_widget, rois, shape_type, self.imageView)
         detector.roi_to_dialog_update()
         self.append(detector)
         return detector
@@ -58,7 +60,7 @@ class DetectorGroup(list):
     def get_rois(self, shape_type):
         rois = []
 
-        x, y = self.imageView.image.shape
+        x, y = self.imageView.image.shape[0:2]
         x0, y0 = x / 2, y / 2
         xr, yr = x / 10, y / 10
 
@@ -83,16 +85,22 @@ class DetectorGroup(list):
 
 
 class Detector:
-    def __init__(self, name:str, controlWidget:DetectorShapeWidget, rois:pg.ROI, shape_type:str):
+    def __init__(self, name:str, controlWidget:DetectorShapeWidget, rois:pg.ROI, shape_type:str, imageView:pg.ImageView, color="", intensity_ratio=""):
         self.name = name
         self.controlWidget = controlWidget
         self.rois = rois
         self.shape_type = shape_type
         self.selected = False
+        self.imageView = imageView.getImageItem()
+        self.roiMask = None
 
         # todo
-        self.color = ""
-        self.intensityRatio = ""
+        self.color = QColor(0, 255, 0)
+        self.color_r = self.color.red()
+        self.color_g = self.color.green()
+        self.color_b = self.color.blue()
+        self.color_name = self.color.name()
+        self.intensityRatio = None
 
         if shape_type == cs.DetectorShape.annular:
             roi_outer = self.rois[0]
@@ -103,6 +111,34 @@ class Detector:
                 lambda: self.update_annulus_radii(roi_inner, roi_outer))
             # roi_inner.sigRegionChangeFinished.connect(
             #     lambda: self.update_annulus_radii(roi_inner, roi_outer))
+
+        self.updateColor()
+        self.controlWidget.colorButton.clicked.connect(self.openColor)
+
+    def openColor(self):
+        self.color = self.controlWidget.colorDialog.getColor(initial=self.color)
+        self.color_r = self.color.red()
+        self.color_g = self.color.green()
+        self.color_b = self.color.blue()
+        self.color_name = self.color.name()
+        self.updateColor()
+
+    def updateColor(self):
+        self.controlWidget.colorButton.setStyleSheet("QWidget#colorButton { background-color: %s }" % self.color_name)
+
+        # Set ROI Color
+        self.rois[0].setPen(color=self.color)
+        if self.shape_type == cs.DetectorShape.annular:
+            self.rois[1].setPen(color=self.color)
+
+        # update view
+        state = self.rois[0].saveState()
+        self.rois[0].setState(state)
+
+
+    def create_roi_mask(self):
+        self.roiMask = mk.get_mask_grp_from_rois([self], self.imageView, self.rois)[0]
+        return self.roiMask
 
     def dialog_to_roi_update(self):
         self.updating_roi = True
@@ -197,15 +233,16 @@ class Detector:
             controlwidget.firstLineText1.setValue(x0)
             controlwidget.firstLineText2.setValue(y0)
 
-    def select(self):
+    def selectEvent(self):
         self.controlWidget.frame.setStyleSheet("QFrame#frame{border: 3px solid #ff0000;}")
-        self.rois[0].setPen(color='r')
-        self.rois[0].hoverPen = pg.mkPen(color='r') # your pyqtgraph should be latest version
+        pen = pg.mkPen(color=QColor(255, 0, 0), width=2, style=Qt.DashLine)
+        self.rois[0].setPen(pen)
+        self.rois[0].hoverPen = pen # your pyqtgraph should be latest version
         self.selected = True
 
-    def unselect(self):
+    def unselectEvent(self):
         self.controlWidget.frame.setStyleSheet("QFrame#frame{border: 3px solid #444a4f;}")
-        self.rois[0].setPen(color='g')
+        self.rois[0].setPen(color=self.color)
         self.rois[0].hoverPen = pg.mkPen(color='y')
         self.selected = False
 
@@ -232,4 +269,3 @@ class Detector:
             y0 = outer.pos().y() + R_outer
             outer.setSize(2 * R_inner + 6)
             outer.setPos(x0 - R_inner - 3, y0 - R_inner - 3)
-

@@ -53,6 +53,7 @@ class DataViewer(QtWidgets.QMainWindow):
         # flag
         self.updating_roi = False
 
+        QtWidgets.QApplication.setAttribute(QtCore.Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
         # Define this as the QApplication object
         self.qtapp = QtWidgets.QApplication.instance()
         if not self.qtapp:
@@ -121,9 +122,9 @@ class DataViewer(QtWidgets.QMainWindow):
 
 
         if diffractionSpace:
-            detector.rois[0].sigRegionChangeFinished.connect(self.update_real_space_view)
+            detector.rois[0].sigRegionChangeFinished.connect(lambda: self.update_real_space_view(False))
         else:
-            detector.rois[0].sigRegionChangeFinished.connect(self.update_diffraction_space_view)
+            detector.rois[0].sigRegionChangeFinished.connect(lambda: self.update_diffraction_space_view(False))
 
         # Treat Annular Circle
         if detector.shape_type == cs.DetectorShape.annular:
@@ -143,13 +144,13 @@ class DataViewer(QtWidgets.QMainWindow):
 
     def select(self, detector: detector.Detector):
         if detector.selected:
-            detector.unselect()
+            detector.unselectEvent()
             delattr(self, 'selected_detector')
         else:
             if hasattr(self, 'selected_detector'):
-                self.selected_detector.unselect()
+                self.selected_detector.unselectEvent()
             self.selected_detector = detector
-            detector.select()
+            detector.selectEvent()
 
 
     dtt:detector.Detector
@@ -164,7 +165,7 @@ class DataViewer(QtWidgets.QMainWindow):
             lambda: detector.controlWidget.frame.setStyleSheet("QFrame#frame{border: 3px solid #ffff00;}") if not detector.selected else 0)
 
         detector.controlWidget.addLeaveEvent(
-            lambda: detector.rois[0].setPen(color='g') if not detector.selected else 0)
+            lambda: detector.rois[0].setPen(color=detector.color) if not detector.selected else 0)
         detector.controlWidget.addLeaveEvent(
             lambda: detector.controlWidget.frame.setStyleSheet("QFrame#frame{border: 3px solid #444a4f;}") if not detector.selected else 0)
 
@@ -269,6 +270,13 @@ class DataViewer(QtWidgets.QMainWindow):
         self.settings.New('real_scaling_mode', dtype=int, initial=0)
         self.settings.real_scaling_mode.connect_bidir_to_widget(self.control_widget.buttonGroup_realMode)
         self.settings.real_scaling_mode.updated_value.connect(self.real_sacling_changed)
+
+        ## Setting ##
+        self.settings.New('color_mode', dtype=bool, initial=False)
+        self.settings.color_mode.connect_bidir_to_widget(self.control_widget.checkBox_color)
+        self.settings.color_mode.updated_value.connect(self.update_color_checked)
+        self.settings.New('real_time_update_mode', dtype=bool, initial=False)
+        self.settings.real_time_update_mode.connect_bidir_to_widget(self.control_widget.checkBox_update)
 
         ## Virtual Detector Shape ##
         self.control_widget.pushBtn_rect_diffractionSpace.clicked.connect(
@@ -464,10 +472,11 @@ class DataViewer(QtWidgets.QMainWindow):
             self.datacube,
             [mk.RoiMask((slice(0, 1), slice(0, 1)), roiShape=cs.DetectorShape.point)]
         )
-        self.diffraction_space_widget.setImage(self.diffraction_space_view, autoLevels=False, autoRange=False)
+        self.diffraction_space_widget.setImage(self.diffraction_space_view, autoLevels=True, autoRange=True)
 
         # self.update_virtual_detector_mode()
         self.addShape_diffractionSpace(cs.DetectorShape.rectangular)
+        self.real_space_widget.autoLevels()
         self.real_space_point_selector = self.addShape_realSpace(cs.DetectorShape.point)
 
         # Normalize diffraction space view
@@ -478,8 +487,7 @@ class DataViewer(QtWidgets.QMainWindow):
         self.control_widget.spinBox_Nx.setMaximum(self.datacube.R_N)
         self.control_widget.spinBox_Ny.setMaximum(self.datacube.R_N)
 
-        self.real_space_widget.autoRange()
-        self.diffraction_space_widget.autoRange()
+        self.real_space_widget.levelMin = 0
 
         # titleBar
         self.titleBar.addRecentFile(fname)
@@ -766,35 +774,75 @@ class DataViewer(QtWidgets.QMainWindow):
     ################## Get virtual images ##################
 
     def diffraction_scaling_changed(self):
-        self.update_diffraction_space_view()
-        self.diffraction_space_widget.autoLevels()
+        self.update_diffraction_space_view(True)
 
     def real_sacling_changed(self):
-        self.update_real_space_view()
-        self.real_space_widget.autoLevels()
+        self.update_real_space_view(True)
 
-    def update_diffraction_space_view(self):
+    def update_color_checked(self):
+        # if self.control_widget.checkBox_color.isChecked():
+        #     for detector in self.detectorGroup_diffractionSpace:
+        #         detector.controlWidget.colorButton.setVisible(True)
+        #     for detector in self.detectorGroup_realSpace:
+        #         detector.controlWidget.colorButton.setVisible(True)
+        # else:
+        #     for detector in self.detectorGroup_diffractionSpace:
+        #         detector.controlWidget.colorButton.setVisible(False)
+        #     for detector in self.detectorGroup_realSpace:
+        #         detector.controlWidget.colorButton.setVisible(False)
+        if self.control_widget.checkBox_color.isChecked():
+            self.control_widget.radioButton_DiffX.setDisabled(True)
+            self.control_widget.radioButton_DiffY.setDisabled(True)
+            self.control_widget.radioButton_CoMX.setDisabled(True)
+            self.control_widget.radioButton_CoMY.setDisabled(True)
+            # self.diffraction_space_widget.getHistogramWidget().item.setLevelMode('rgba')
+            # self.real_space_widget.getHistogramWidget().item.setLevelMode('rgba')
+
+        else:
+            self.control_widget.radioButton_DiffX.setDisabled(False)
+            self.control_widget.radioButton_DiffY.setDisabled(False)
+            self.control_widget.radioButton_CoMX.setDisabled(False)
+            self.control_widget.radioButton_CoMY.setDisabled(False)
+            # self.diffraction_space_widget.getHistogramWidget().item.setLevelMode('mono')
+            # self.real_space_widget.getHistogramWidget().item.setLevelMode('mono')
+        if not self.control_widget.radioButton_Integrate.isChecked():
+            self.control_widget.radioButton_Integrate.setChecked(True)
+
+        # self.diffraction_space_widget.getHistogramWidget().item.vb.setLimits(yMin=1)
+        # self.real_space_widget.getHistogramWidget().item.vb.setLimits(yMin=1)
+
+        self.update_real_space_view(autoLevels=True)
+        self.update_diffraction_space_view(autoLevels=True)
+
+        # todo
+        # self.diffraction_space_widget.getHistogramWidget().item.vb.
+        # print(self.diffraction_space_widget.getHistogramWidget().item.getLevels())
+
+    def update_diffraction_space_view(self, autoLevels=False):
         if len(self.detectorGroup_realSpace) == 0:
             return
 
-        ## Create Mask ##
-        roi_mask_grp = mk.get_mask_grp_from_rois(self.detectorGroup_realSpace,
-                                                 self.real_space_widget.getImageItem(),
-                                                 True)
+        if self.settings.color_mode.val == False:
+            ## Create Mask ##
+            roi_mask_grp = mk.get_mask_grp_from_rois(self.detectorGroup_realSpace,
+                                                     self.real_space_widget.getImageItem(),
+                                                     True)
+            ## Get Virtual Image ##
+            new_diffraction_space_view, success = compute.get_diffraction_image(self.datacube, masks=roi_mask_grp)
 
-        ## Get Virtual Image ##
-        new_diffraction_space_view, success = compute.get_diffraction_image(self.datacube, masks=roi_mask_grp)
+        else:
+            new_diffraction_space_view, success = compute.get_diffraction_image_color(self.datacube,
+                                                                           self.detectorGroup_realSpace)
 
-        ## Set Image ##
         if success:
             # Scaling
             self.diffraction_space_view = compute.scaling(new_diffraction_space_view, self.settings.diffraction_scaling_mode.val, self.datacube)
             self.diffraction_space_widget.setImage(self.diffraction_space_view,
-                                                   autoLevels=False, autoRange=False)
+                                                   autoLevels=autoLevels)
 
-        else:
-            pass
-        return
+        ## Scale Level For Color ##
+        if autoLevels == True and self.settings.color_mode.val == True:
+            self.diffraction_space_widget.setLevels(min=self.diffraction_space_view.min(), max=self.diffraction_space_view.max())
 
     def update_diffraction_space_view2(self):
         roi_state = self.real_space_point_selector.saveState()
@@ -826,10 +874,6 @@ class DataViewer(QtWidgets.QMainWindow):
         else:
             pass
         return
-
-    def getSlices(self, roi: pg.ROI) -> tuple:
-        _slices, _transforms = roi.getArraySlice(self.datacube.data[0, 0, :, :],self.diffraction_space_widget.getImageItem())
-        return _slices
 
     # def update_dialog_diffractionSpace(self):
     #
@@ -947,7 +991,7 @@ class DataViewer(QtWidgets.QMainWindow):
     #     self.updating_roi = False
 
 
-    def update_real_space_view(self):
+    def update_real_space_view(self, autoLevels=False):
         tic = time.process_time()
         virtual_detector_mode = self.settings.virtual_detector_mode.val
 
@@ -955,33 +999,36 @@ class DataViewer(QtWidgets.QMainWindow):
         if len(self.detectorGroup_diffractionSpace) == 0:
             return
 
-        ## Create Mask ##
-        roi_mask_grp = mk.get_mask_grp_from_rois(self.detectorGroup_diffractionSpace,
-                                                 self.diffraction_space_widget.getImageItem(),
-                                                 False)
+        if self.settings.color_mode.val == False:
+            ## Create Mask ##
+            roi_mask_grp = mk.get_mask_grp_from_rois(self.detectorGroup_diffractionSpace,
+                                                     self.diffraction_space_widget.getImageItem(),
+                                                     False)
 
-        ## Get Virtual Image ##
-        new_real_space_view, success = compute.get_virtual_image(self.datacube, masks=roi_mask_grp, integration_mode=virtual_detector_mode)
+            ## Get Virtual Image ##
+            new_real_space_view, success = compute.get_virtual_image(self.datacube, masks=roi_mask_grp, integration_mode=virtual_detector_mode)
+        else:
+            new_real_space_view, success = compute.get_virtual_image_color(self.datacube, self.detectorGroup_diffractionSpace)
 
-        ## Scaling ##
-        new_real_space_view = compute.scaling(new_real_space_view,
-                                                      self.settings.real_scaling_mode.val, self.datacube)
+        if success:
+            ## Scaling ##
+            new_real_space_view = compute.scaling(new_real_space_view,
+                                                  self.settings.real_scaling_mode.val, self.datacube)
 
-        # # Color Test
-        # new_real_space_view = np.dstack((new_real_space_view, np.zeros(new_real_space_view.shape),
-        #                                       np.zeros(new_real_space_view.shape)))
+            ## Set Image ##
+            self.real_space_view = new_real_space_view
+            self.real_space_widget.setImage(self.real_space_view, autoLevels=autoLevels)
 
-        ## Set Image ##
-        self.real_space_view = new_real_space_view
+            ## Scale Level For Color ##
+            if autoLevels == True and self.settings.color_mode.val == True:
+                self.real_space_widget.setLevels(min=self.real_space_view.min(), max=self.real_space_view.max())
 
-        self.real_space_widget.setImage(self.real_space_view, autoLevels=True)
+            ## Update strain_window ##
+            if self.strain_window is not None:
+                self.strain_window.bragg_disk_tab.update_views()
 
-        ## Update strain_window ##
-        if self.strain_window is not None:
-            self.strain_window.bragg_disk_tab.update_views()
-
-        toc = time.process_time()
-        print("analysis done in "+str(toc-tic)+"ms")
+            toc = time.process_time()
+            print("analysis done in "+str(toc-tic)+"ms")
 
 
     def exec_(self):
@@ -1002,13 +1049,13 @@ class QtWidget_Key(QtWidgets.QWidget):
             roi_state = self.dataViewer.selected_detector.rois[0].saveState()
             x0, y0 = roi_state['pos']
             if e.key() == QtCore.Qt.Key_Left:
-                x0 = (x0-1)%(self.dataViewer.datacube.data.shape[0])
+                x0 = (x0-1)%(self.dataViewer.selected_detector.imageView.image.shape[0])
             elif e.key() == QtCore.Qt.Key_Right:
-                x0 = (x0+1)%(self.dataViewer.datacube.data.shape[0])
+                x0 = (x0+1)%(self.dataViewer.selected_detector.imageView.image.shape[0])
             elif e.key() == QtCore.Qt.Key_Up:
-                y0 = (y0-1)%(self.dataViewer.datacube.data.shape[1])
+                y0 = (y0-1)%(self.dataViewer.selected_detector.imageView.image.shape[1])
             elif e.key() == QtCore.Qt.Key_Down:
-                y0 = (y0+1)%(self.dataViewer.datacube.data.shape[1])
+                y0 = (y0+1)%(self.dataViewer.selected_detector.imageView.image.shape[1])
             self.dataViewer.selected_detector.rois[0].setPos((x0,y0))
 
 
