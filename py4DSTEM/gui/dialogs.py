@@ -82,6 +82,8 @@ class ControlPanel(QtWidgets.QWidget):
         self.settingTabs = SettingTabs()
         self.checkBox_color = self.settingTabs.settingTab.color_checkbox
         self.checkBox_update = self.settingTabs.settingTab.update_checkbox
+        self.pushBtn_level_diffSpace = self.settingTabs.settingTab.update_level_diffraction_space_button
+        self.pushBtn_level_realSpace = self.settingTabs.settingTab.update_level_real_space_button
 
         self.detectorShapeTabs = DetectorShapeTabs()
         self.pushBtn_rect_diffractionSpace = self.detectorShapeTabs.diffractionSpaceTab.pushButton_RectDetector
@@ -468,6 +470,11 @@ class SettingTabs(QtWidgets.QTabWidget):
             self.update_checkbox = QtWidgets.QCheckBox("real time update")
             self.layout.addWidget(self.color_checkbox)
             self.layout.addWidget(self.update_checkbox)
+
+            self.update_level_diffraction_space_button = QtWidgets.QPushButton("update diff level")
+            self.update_level_real_space_button = QtWidgets.QPushButton("update real level")
+            self.layout.addWidget(self.update_level_diffraction_space_button)
+            self.layout.addWidget(self.update_level_real_space_button)
 
 
 class DetectorShapeWidget(QtWidgets.QWidget):

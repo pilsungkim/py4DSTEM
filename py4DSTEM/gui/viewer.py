@@ -160,12 +160,12 @@ class DataViewer(QtWidgets.QMainWindow):
         detector.controlWidget.addKeyEvent(detector.dialog_to_roi_update)
 
         detector.controlWidget.addEnterEvent(
-            lambda: detector.updatePen(2,True))
+            lambda: detector.updatePen(1,True))
         detector.controlWidget.addEnterEvent(
             lambda: detector.controlWidget.frame.setStyleSheet("QFrame#frame{border: 3px solid #ffff00;}") if not detector.selected else 0)
 
         detector.controlWidget.addLeaveEvent(
-            lambda: detector.updatePen(2,False))
+            lambda: detector.updatePen(1,False))
         detector.controlWidget.addLeaveEvent(
             lambda: detector.controlWidget.frame.setStyleSheet("QFrame#frame{border: 3px solid #444a4f;}") if not detector.selected else 0)
 
@@ -277,6 +277,9 @@ class DataViewer(QtWidgets.QMainWindow):
         self.settings.color_mode.updated_value.connect(self.update_color_checked)
         self.settings.New('real_time_update_mode', dtype=bool, initial=False)
         self.settings.real_time_update_mode.connect_bidir_to_widget(self.control_widget.checkBox_update)
+        self.control_widget.pushBtn_level_diffSpace.clicked.connect(lambda: self.autoLevels(self.diffraction_space_widget))
+        self.control_widget.pushBtn_level_realSpace.clicked.connect(lambda: self.autoLevels(self.real_space_widget))
+
 
         ## Virtual Detector Shape ##
         self.control_widget.pushBtn_rect_diffractionSpace.clicked.connect(
@@ -769,7 +772,7 @@ class DataViewer(QtWidgets.QMainWindow):
             outer.setPos(x0-R_inner-3, y0-R_inner-3)
 
     def update_virtual_detector_mode(self):
-        self.update_real_space_view()
+        self.update_real_space_view(True)
 
     ################## Get virtual images ##################
 
@@ -837,12 +840,11 @@ class DataViewer(QtWidgets.QMainWindow):
         if success:
             # Scaling
             self.diffraction_space_view = compute.scaling(new_diffraction_space_view, self.settings.diffraction_scaling_mode.val, self.datacube)
-            self.diffraction_space_widget.setImage(self.diffraction_space_view,
-                                                   autoLevels=autoLevels)
+            self.diffraction_space_widget.setImage(self.diffraction_space_view, autoLevels=False)
 
         ## Scale Level For Color ##
-        if autoLevels == True and self.settings.color_mode.val == True:
-            self.diffraction_space_widget.setLevels(min=self.diffraction_space_view.min(), max=self.diffraction_space_view.max())
+        if autoLevels:
+            self.autoLevels(self.diffraction_space_widget)
 
 
     def update_real_space_view(self, autoLevels=False):
@@ -871,11 +873,11 @@ class DataViewer(QtWidgets.QMainWindow):
 
             ## Set Image ##
             self.real_space_view = new_real_space_view
-            self.real_space_widget.setImage(self.real_space_view, autoLevels=autoLevels)
+            self.real_space_widget.setImage(self.real_space_view, autoLevels=False)
 
             ## Scale Level For Color ##
-            if autoLevels == True and self.settings.color_mode.val == True:
-                self.real_space_widget.setLevels(min=self.real_space_view.min(), max=self.real_space_view.max())
+            if autoLevels:
+                self.autoLevels(self.real_space_widget)
 
             ## Update strain_window ##
             if self.strain_window is not None:
@@ -884,6 +886,11 @@ class DataViewer(QtWidgets.QMainWindow):
             toc = time.process_time()
             print("analysis done in "+str(toc-tic)+"ms")
 
+    def autoLevels(self, view):
+        if self.settings.color_mode.val:
+            view.setLevels(min=view.image.min(), max=view.image.max())
+        else :
+            view.autoLevels()
 
     def exec_(self):
         return self.qtapp.exec_()

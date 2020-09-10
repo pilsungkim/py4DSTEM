@@ -29,7 +29,7 @@ def get_virtual_image(datacube: datacube, masks: list, integration_mode: cs.Dete
 
 
 def get_virtual_image_color(datacube: datacube, detectors: list):
-    if len(detectors) == 0:
+    if len([detector for detector in detectors if not detector.hide]) == 0:
         return 0, 0
     integrated_img = None
     for detector in detectors:
