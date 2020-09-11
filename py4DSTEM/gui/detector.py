@@ -115,9 +115,9 @@ class Detector:
             roi_outer = self.rois[0]
             roi_inner = self.rois[1]
             roi_outer.sigRegionChangeFinished.connect(
-                lambda: self.update_annulus_pos(roi_inner, roi_outer))
+                self.update_annulus_pos)
             roi_outer.sigRegionChangeFinished.connect(
-                lambda: self.update_annulus_radii(roi_inner, roi_outer))
+                self.update_annulus_radii)
             # roi_inner.sigRegionChangeFinished.connect(
             #     lambda: self.update_annulus_radii(roi_inner, roi_outer))
 
@@ -183,7 +183,7 @@ class Detector:
 
 
     def create_roi_mask(self):
-        self.roiMask = mk.get_mask_grp_from_rois([self], self.imageView, self.rois)[0]
+        self.roiMask = mk.get_mask_grp_from_rois([self], self.imageView)[0]
         return self.roiMask
 
     def dialog_to_roi_update(self):

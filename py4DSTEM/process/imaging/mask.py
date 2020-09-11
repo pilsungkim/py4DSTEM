@@ -8,10 +8,7 @@ class RoiMask():
 
     def __init__(self, slices: tuple, roiShape=None, innerR=0, data=None, maxSize:tuple=None):
 
-        if len(slices) == 2:
-            self.slice_x, self.slice_y = slices
-        elif len(slices) == 3:
-            self.slice_x, self.slice_y, _ = slices
+        self.slice_x, self.slice_y = slices[0:2]
         self.size_x = self.slice_x.stop - self.slice_x.start
         self.size_y = self.slice_y.stop - self.slice_y.start
         self.innerR = innerR
@@ -167,7 +164,7 @@ def get_compound_mask_list(mask_list: list):
     return compound_mask
 
 
-def get_mask_grp_from_rois(detector_grp: list, imageView: pg.ImageView, diffractionSpace=True):
+def get_mask_grp_from_rois(detector_grp: list, imageView: pg.ImageView):
 
     roi_mask_grp = []
     for dtt in [detector for detector in detector_grp if not detector.hide]:
@@ -176,6 +173,7 @@ def get_mask_grp_from_rois(detector_grp: list, imageView: pg.ImageView, diffract
 
         slices, transforms = dtt.rois[0].getArraySlice(imageView.image,
                                                        imageView)
+        slices = slices[0:2]
 
         if shape_type in (cs.DetectorShape.rectangular, cs.DetectorShape.circular):
             mask = RoiMask(roiShape=shape_type, slices=slices, maxSize=imageView.image.shape[0:2])
@@ -188,6 +186,7 @@ def get_mask_grp_from_rois(detector_grp: list, imageView: pg.ImageView, diffract
             slice_x, slice_y = slices
             slices_inner, transforms = rois[1].getArraySlice(imageView.image,
                                                              imageView)
+            slices_inner = slices_inner[0:2]
             slice_inner_x, slice_inner_y = slices_inner
             R = 0.5 * ((slice_inner_x.stop - slice_inner_x.start) / (slice_x.stop - slice_x.start) + (
                     slice_inner_y.stop - slice_inner_y.start) / (slice_y.stop - slice_y.start))

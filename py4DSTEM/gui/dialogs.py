@@ -80,9 +80,16 @@ class ControlPanel(QtWidgets.QWidget):
 
         self.settingTabs = SettingTabs()
         self.checkBox_color = self.settingTabs.settingTab.color_checkbox
-        self.checkBox_update = self.settingTabs.settingTab.update_checkbox
-        self.pushBtn_level_diffSpace = self.settingTabs.settingTab.update_level_diffraction_space_button
-        self.pushBtn_level_realSpace = self.settingTabs.settingTab.update_level_real_space_button
+        # self.chkBox_realtime = self.settingTabs.settingTab.chkBox_realtime
+        # self.btn_update_diffSpace = self.settingTabs.settingTab.btn_update_diff
+        # self.btn_update_realSpace = self.settingTabs.settingTab.btn_update_real
+        # self.pushBtn_level_diffSpace = self.settingTabs.settingTab.update_level_diffraction_space_button
+        # self.pushBtn_level_realSpace = self.settingTabs.settingTab.update_level_real_space_button
+        self.chkBox_manualViewUpdate = self.settingTabs.updateTab.chkBox_manualViewUpdate
+        self.btn_update_diffSpace = self.settingTabs.updateTab.btn_manualViewUpdate_diff
+        self.btn_update_realSpace = self.settingTabs.updateTab.btn_manualViewUpdate_real
+        self.btn_level_diffSpace = self.settingTabs.updateTab.btn_levelUpdate_diff
+        self.btn_level_realSpace = self.settingTabs.updateTab.btn_levelUpdate_real
 
         self.detectorShapeTabs = DetectorShapeTabs()
         self.pushBtn_rect_diffractionSpace = self.detectorShapeTabs.diffractionSpaceTab.pushButton_RectDetector
@@ -100,10 +107,10 @@ class ControlPanel(QtWidgets.QWidget):
         ############## Create and set layout ###############
         ####################################################
 
-        layout.addWidget(self.preprocessingTabs,2)
+        layout.addWidget(self.preprocessingTabs,1)
         layout.addWidget(self.scalingTabs,1)
         layout.addWidget(self.detectorModeTabs,1)
-        layout.addWidget(self.settingTabs,0.5)
+        layout.addWidget(self.settingTabs,1)
         layout.addWidget(self.detectorShapeTabs,2)
         layout.addWidget(self.analysisTabs,0.5)
         layout.setSpacing(0)
@@ -457,24 +464,51 @@ class SettingTabs(QtWidgets.QTabWidget):
         QtWidgets.QTabWidget.__init__(self)
 
         self.settingTab = self.SettingTab()
-
         self.addTab(self.settingTab, "Setting")
+        self.updateTab = self.UpdateTab()
+        self.addTab(self.updateTab, "Update")
 
     class SettingTab(QtWidgets.QWidget):
         def __init__(self):
             QtWidgets.QWidget.__init__(self)
             self.layout = QtWidgets.QVBoxLayout()
             self.setLayout(self.layout)
+
             self.color_checkbox = QtWidgets.QCheckBox("Color (only sum)")
-            self.update_checkbox = QtWidgets.QCheckBox("real time update")
+
             self.layout.addWidget(self.color_checkbox)
-            self.layout.addWidget(self.update_checkbox)
 
-            self.update_level_diffraction_space_button = QtWidgets.QPushButton("update diff level")
-            self.update_level_real_space_button = QtWidgets.QPushButton("update real level")
-            self.layout.addWidget(self.update_level_diffraction_space_button)
-            self.layout.addWidget(self.update_level_real_space_button)
+    class UpdateTab(QtWidgets.QWidget):
+        def __init__(self):
+            QtWidgets.QWidget.__init__(self)
+            self.layout = QtWidgets.QVBoxLayout()
+            self.setLayout(self.layout)
 
+            self.layout_manualViewUpdate = QtWidgets.QVBoxLayout()
+            self.chkBox_manualViewUpdate = QtWidgets.QCheckBox("Manual View Update")
+            self.layout_manualViewUpdate_btn = QtWidgets.QHBoxLayout()
+            self.btn_manualViewUpdate_real = QtWidgets.QPushButton("Real Space")
+            self.btn_manualViewUpdate_diff = QtWidgets.QPushButton("Diff Space")
+            self.layout_manualViewUpdate_btn.addWidget(self.btn_manualViewUpdate_diff, alignment=Qt.AlignTop)
+            self.layout_manualViewUpdate_btn.addWidget(self.btn_manualViewUpdate_real, alignment=Qt.AlignTop)
+            self.layout_manualViewUpdate.addWidget(self.chkBox_manualViewUpdate, alignment=Qt.AlignBottom)
+            self.layout_manualViewUpdate.addLayout(self.layout_manualViewUpdate_btn)
+
+            self.btn_manualViewUpdate_diff.setDisabled(True)
+            self.btn_manualViewUpdate_real.setDisabled(True)
+
+            self.layout_levelUpdate = QtWidgets.QVBoxLayout()
+            self.lbl_levelUpdate = QtWidgets.QLabel("Level Update")
+            self.layout_levelUpdate_btn = QtWidgets.QHBoxLayout()
+            self.btn_levelUpdate_diff = QtWidgets.QPushButton("Diff Space")
+            self.btn_levelUpdate_real = QtWidgets.QPushButton("Real Space")
+            self.layout_levelUpdate_btn.addWidget(self.btn_levelUpdate_diff, alignment=Qt.AlignTop)
+            self.layout_levelUpdate_btn.addWidget(self.btn_levelUpdate_real, alignment=Qt.AlignTop)
+            self.layout_levelUpdate.addWidget(self.lbl_levelUpdate, alignment=Qt.AlignBottom)
+            self.layout_levelUpdate.addLayout(self.layout_levelUpdate_btn)
+
+            self.layout.addLayout(self.layout_manualViewUpdate)
+            self.layout.addLayout(self.layout_levelUpdate)
 
 class DetectorShapeWidget(QtWidgets.QWidget):
     def __init__(self, shape:str, name:str=None):

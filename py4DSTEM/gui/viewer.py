@@ -135,9 +135,9 @@ class DataViewer(QtWidgets.QMainWindow):
 
             detector.rois[1].sigRegionChangeFinished.connect(detector.roi_to_dialog_update)
             if diffractionSpace:
-                detector.rois[1].sigRegionChangeFinished.connect(self.update_real_space_view)
+                detector.rois[1].sigRegionChangeFinished.connect(lambda: self.update_real_space_view(False))
             else:
-                detector.rois[1].sigRegionChangeFinished.connect(self.update_diffraction_space_view)
+                detector.rois[1].sigRegionChangeFinished.connect(lambda: self.update_diffraction_space_view(False))
 
 
 
@@ -276,11 +276,16 @@ class DataViewer(QtWidgets.QMainWindow):
         ## Setting ##
         self.settings.New('color_mode', dtype=bool, initial=False)
         self.settings.color_mode.connect_bidir_to_widget(self.control_widget.checkBox_color)
-        self.settings.color_mode.updated_value.connect(self.update_color_checked)
-        self.settings.New('real_time_update_mode', dtype=bool, initial=False)
-        self.settings.real_time_update_mode.connect_bidir_to_widget(self.control_widget.checkBox_update)
-        self.control_widget.pushBtn_level_diffSpace.clicked.connect(lambda: self.autoLevels(self.diffraction_space_widget))
-        self.control_widget.pushBtn_level_realSpace.clicked.connect(lambda: self.autoLevels(self.real_space_widget))
+        self.settings.color_mode.updated_value.connect(self.update_color_mode)
+
+        self.settings.New('manual_view_update', dtype=bool, initial=False)
+        self.settings.manual_view_update.connect_bidir_to_widget(self.control_widget.chkBox_manualViewUpdate)
+        self.control_widget.chkBox_manualViewUpdate.clicked.connect(self.manual_view_update_changed)
+        self.control_widget.btn_update_diffSpace.clicked.connect(lambda: self.update_diffraction_space_view(manualUpdateSig=True))
+        self.control_widget.btn_update_realSpace.clicked.connect(lambda: self.update_real_space_view(manualUpdateSig=True))
+
+        self.control_widget.btn_level_diffSpace.clicked.connect(lambda: self.autoLevels(self.diffraction_space_widget))
+        self.control_widget.btn_level_realSpace.clicked.connect(lambda: self.autoLevels(self.real_space_widget))
 
 
         ## Virtual Detector Shape ##
@@ -321,6 +326,14 @@ class DataViewer(QtWidgets.QMainWindow):
     #         img = self.real_space_widget.image
     #     print("Save image to "+fileName)
     #     io.imsave(fileName, img)
+
+    def manual_view_update_changed(self):
+        if self.settings.manual_view_update.val:
+            self.control_widget.btn_update_diffSpace.setDisabled(False)
+            self.control_widget.btn_update_realSpace.setDisabled(False)
+        else:
+            self.control_widget.btn_update_diffSpace.setDisabled(True)
+            self.control_widget.btn_update_realSpace.setDisabled(True)
 
     def save_current_space(self, diffractionSpace = True):
         fileFilter = "tiff(*.tiff);; jpg(*.jpg);; png(*.png)"
@@ -798,7 +811,7 @@ class DataViewer(QtWidgets.QMainWindow):
     def real_sacling_changed(self):
         self.update_real_space_view(True)
 
-    def update_color_checked(self):
+    def update_color_mode(self):
         # if self.control_widget.checkBox_color.isChecked():
         #     for detector in self.detectorGroup_diffractionSpace:
         #         detector.controlWidget.colorButton.setVisible(True)
@@ -837,15 +850,17 @@ class DataViewer(QtWidgets.QMainWindow):
         # self.diffraction_space_widget.getHistogramWidget().item.vb.
         # print(self.diffraction_space_widget.getHistogramWidget().item.getLevels())
 
-    def update_diffraction_space_view(self, autoLevels=False):
+    def update_diffraction_space_view(self, autoLevels=False, manualUpdateSig=False):
+        if self.settings.manual_view_update.val and not manualUpdateSig:
+            return
+
         if len(self.detectorGroup_realSpace) == 0:
             return
 
         if self.settings.color_mode.val == False:
             ## Create Mask ##
             roi_mask_grp = mk.get_mask_grp_from_rois(self.detectorGroup_realSpace,
-                                                     self.real_space_widget.getImageItem(),
-                                                     True)
+                                                     self.real_space_widget.getImageItem())
             ## Get Virtual Image ##
             new_diffraction_space_view, success = compute.get_diffraction_image(self.datacube, roi_mask_grp)
 
@@ -863,19 +878,20 @@ class DataViewer(QtWidgets.QMainWindow):
             self.autoLevels(self.diffraction_space_widget)
 
 
-    def update_real_space_view(self, autoLevels=False):
-        tic = time.process_time()
-        virtual_detector_mode = self.settings.virtual_detector_mode.val
+    def update_real_space_view(self, autoLevels=False, manualUpdateSig=False):
+        if self.settings.manual_view_update.val and not manualUpdateSig:
+            return
 
-        ## retun if roi none ##
         if len(self.detectorGroup_diffractionSpace) == 0:
             return
+
+        tic = time.process_time()
+        virtual_detector_mode = self.settings.virtual_detector_mode.val
 
         if self.settings.color_mode.val == False:
             ## Create Mask ##
             roi_mask_grp = mk.get_mask_grp_from_rois(self.detectorGroup_diffractionSpace,
-                                                     self.diffraction_space_widget.getImageItem(),
-                                                     False)
+                                                     self.diffraction_space_widget.getImageItem())
 
             ## Get Virtual Image ##
             new_real_space_view, success = compute.get_virtual_image(self.datacube, roi_mask_grp, integration_mode=virtual_detector_mode)
@@ -918,10 +934,11 @@ class QtWidget_Key(QtWidgets.QWidget):
 
     def keyReleaseEvent(self, e: QtGui.QKeyEvent) -> None:
         super().keyReleaseEvent(e)
+        focusWidget = self.focusWidget()
 
-        if e.key() not in (QtCore.Qt.Key_Left, QtCore.Qt.Key_Right, QtCore.Qt.Key_Up, QtCore.Qt.Key_Down):
+        if e.key() not in (QtCore.Qt.Key_Left, QtCore.Qt.Key_Right, QtCore.Qt.Key_Up, QtCore.Qt.Key_Down, QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return):
             return
-        if isinstance(self.focusWidget(), QtWidgets.QDoubleSpinBox):
+        if isinstance(focusWidget, QtWidgets.QDoubleSpinBox):
             return
         if hasattr(self.dataViewer, 'selected_detector'):
             roi_state = self.dataViewer.selected_detector.rois[0].saveState()
@@ -935,6 +952,12 @@ class QtWidget_Key(QtWidgets.QWidget):
             elif e.key() == QtCore.Qt.Key_Down:
                 y0 = (y0+1)%(self.dataViewer.selected_detector.imageView.image.shape[1])
             self.dataViewer.selected_detector.rois[0].setPos((x0,y0))
-
+        if (e.key() in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return)) \
+                and self.dataViewer.settings.manual_view_update.val \
+                and isinstance(focusWidget,pg.GraphicsView):
+            if focusWidget.sceneObj == self.dataViewer.diffraction_space_widget.scene:
+                self.dataViewer.update_real_space_view(manualUpdateSig=True)
+            elif focusWidget.sceneObj == self.dataViewer.real_space_widget.scene:
+                self.dataViewer.update_diffraction_space_view(manualUpdateSig=True)
 
 ################################ End of class ##################################
