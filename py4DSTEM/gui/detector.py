@@ -158,7 +158,12 @@ class Detector:
             self.rois[1].setPen(pen)
 
     def openColor(self):
-        self.color = self.controlWidget.colorDialog.getColor(initial=self.color)
+        color = self.controlWidget.colorDialog.getColor(initial=self.color)
+
+        if not color.isValid():
+            return
+
+        self.color = color
         self.color_r = self.color.red()
         self.color_g = self.color.green()
         self.color_b = self.color.blue()
