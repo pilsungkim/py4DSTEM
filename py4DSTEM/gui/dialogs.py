@@ -46,7 +46,6 @@ class ControlPanel(QtWidgets.QWidget):
         # Container widget
         scrollableWidget = QtWidgets.QWidget()
         layout = QtWidgets.QHBoxLayout(self)
-
         ############## Make sub-widgets ###############
         # Provide handles to connect to their widgets #
         ###############################################
@@ -503,7 +502,10 @@ class DetectorShapeWidget(QtWidgets.QWidget):
 
         # Hide Toggle #
         self.hide_checkBox = QtWidgets.QCheckBox()
+        self.hide_checkBox.setChecked(True)
+        self.hide_checkBox.setObjectName("CheckVisible")
         self.titlebar_layout.addWidget(self.hide_checkBox)
+
 
         # Shape Name #
         self.shapeName = QtWidgets.QLabel("Rectangular mask")
@@ -511,9 +513,7 @@ class DetectorShapeWidget(QtWidgets.QWidget):
         self.shapeName.setAlignment(Qt.AlignLeft)
         self.titlebar_layout.addWidget(self.shapeName, 2)
 
-        # More Settings CheckBox #
-        self.moreSetting_checkBox = QtWidgets.QCheckBox()
-        self.titlebar_layout.addWidget(self.moreSetting_checkBox, alignment=Qt.AlignRight)
+
         # Change hide/show checkboxes to triangles
         # self.titlebar.setStyleSheet(
         #     "background-color: #000000;"
@@ -523,13 +523,20 @@ class DetectorShapeWidget(QtWidgets.QWidget):
         # )
 
         # Color Button #
-        self.colorButton = QtWidgets.QPushButton("color")
+        self.colorButton = QtWidgets.QToolButton()
+        self.colorButton.setText("  ")
         self.colorButton.setObjectName("colorButton")
         self.titlebar_layout.addWidget(self.colorButton)
         self.colorDialog = QtWidgets.QColorDialog()
 
+        # More Settings CheckBox #
+        self.moreSetting_checkBox = QtWidgets.QCheckBox()
+        self.titlebar_layout.addWidget(self.moreSetting_checkBox, alignment=Qt.AlignRight)
+        self.moreSetting_checkBox.setObjectName("CheckMoreSetting")
+
         # Del button #
-        self.delButton = QtWidgets.QPushButton("Del")
+        self.delButton = QtWidgets.QToolButton()
+        self.delButton.setText("×")
         self.titlebar_layout.addWidget(self.delButton)
 
         self.frame_layout.addWidget(self.titlebar)
@@ -798,7 +805,6 @@ class TitleBar(QtWidgets.QWidget):
     def __init__(self, mainWindow:QMainWindow, parent):
         self.parent = parent
         super().__init__()
-
         self.layout = QtWidgets.QHBoxLayout()
         self.setLayout(self.layout)
         self.mainWindow = mainWindow
@@ -808,7 +814,8 @@ class TitleBar(QtWidgets.QWidget):
 
         self.layout.addWidget(self.menu,alignment=Qt.AlignLeft)
         self.layout.addWidget(self.label_filename, alignment=Qt.AlignLeft)
-        self.layout.addWidget(self.window_control,alignment=Qt.AlignRight)
+        self.layout.addStretch(1)
+        self.layout.addWidget(self.window_control, alignment=Qt.AlignRight)
 
         self.setMaximumHeight(50)
         self.setContentsMargins(0, 0, 0, 0)
@@ -913,25 +920,28 @@ class TitleBar(QtWidgets.QWidget):
     class WindowControlBar(QtWidgets.QWidget):
         def __init__(self, mainWindow: QMainWindow):
             super().__init__()
-            BUTTON_WIDTH = 5
-            BUTTON_HEIGHT = 20
+            BUTTON_WIDTH = 40
+            BUTTON_HEIGHT = 30
             self.layout = QtWidgets.QHBoxLayout()
             self.setLayout(self.layout)
             self.setContentsMargins(0, 0, 0, 0)
             self.layout.setContentsMargins(0, 0, 0, 0)
             self.layout.setSpacing(0)
-            self.ButtonMin = QtWidgets.QPushButton("─")
+            self.ButtonMin = QtWidgets.QToolButton()
+            self.ButtonMin.setText("─")
             self.ButtonMin.setFixedSize(QtCore.QSize(BUTTON_WIDTH, BUTTON_HEIGHT))
             self.ButtonMin.setObjectName("ButtonMin")
-            # self.ButtonMin.setIcon(QtGui.QIcon("./icons/minimize.png"))
-            self.ButtonMax = QtWidgets.QPushButton("□")
+            self.ButtonMax = QtWidgets.QToolButton()
+            self.ButtonMax.setText("□")
             self.ButtonMax.setFixedSize(QtCore.QSize(BUTTON_WIDTH, BUTTON_HEIGHT))
             self.ButtonMax.setObjectName("ButtonMax")
-            self.ButtonRestore = QtWidgets.QPushButton("□")
+            self.ButtonRestore = QtWidgets.QToolButton()
+            self.ButtonRestore.setText("▣")
             self.ButtonRestore.setFixedSize(QtCore.QSize(BUTTON_WIDTH, BUTTON_HEIGHT))
             self.ButtonRestore.setObjectName("ButtonRestore")
             self.ButtonRestore.setVisible(False)
-            self.ButtonClose = QtWidgets.QPushButton("×")
+            self.ButtonClose = QtWidgets.QToolButton()
+            self.ButtonClose.setText("×")
             self.ButtonClose.setFixedSize(QtCore.QSize(BUTTON_WIDTH, BUTTON_HEIGHT))
             self.ButtonClose.setObjectName("ButtonClose")
             self.layout.addWidget(self.ButtonMin)
@@ -949,11 +959,19 @@ class TitleBar(QtWidgets.QWidget):
 
         def showMaximized(self):
             self.mainWindow.showMaximized()
+
+            # self.ButtonMax.clearFocus()
+            # self.ButtonRestore.clearFocus()
+
             self.ButtonMax.setVisible(False)
             self.ButtonRestore.setVisible(True)
 
         def showNormal(self):
             self.mainWindow.showNormal()
+
+            # self.ButtonMax.clearFocus()
+            # self.ButtonRestore.clearFocus()
+
             self.ButtonMax.setVisible(True)
             self.ButtonRestore.setVisible(False)
 

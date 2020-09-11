@@ -1,0 +1,33 @@
+
+/* Title Button */
+#ButtonClose {
+   font-size:17px;
+}
+#ButtonClose:Hover {
+   background-color: #8b0000;
+   border-radius:0px;
+}
+#ButtonMin:Hover {
+   background-color: #555555;
+   border-radius:0px;
+}
+#ButtonMax:Hover {
+   background-color: #555555;
+   border-radius:0px;
+}
+#ButtonRestore:Hover {
+   background-color: #555555;
+   border-radius:0px;
+}
+
+/*MoreSetting*/
+#CheckMoreSetting::indicator:unchecked {
+   image:url(./icons/New_Arrow_closed.png)
+}
+#CheckMoreSetting::indicator:checked {
+   image:url(./icons/New_Arrow_Open.png)
+}
+/*Visiblity Control*/
+#CheckVisible::indicator:checked {
+   image:url(./icons/eye.png)
+}

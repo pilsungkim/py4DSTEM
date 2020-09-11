@@ -312,11 +312,11 @@ class Detector:
 
     def hideButtonEvent(self):
         if self.controlWidget.hide_checkBox.isChecked():
-            self.updatePen(2, True)
-            self.hide = True
-        else:
             self.updatePen(2, False)
             self.hide = False
+        else:
+            self.updatePen(2, True)
+            self.hide = True
         # update view
         state = self.rois[0].saveState()
         self.rois[0].setState(state)

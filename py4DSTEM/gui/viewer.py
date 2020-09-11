@@ -90,7 +90,9 @@ class DataViewer(QtWidgets.QMainWindow):
                                                               widget=DetectorShapeWidget)
 
         import qdarkstyle
-        self.main_window.setStyleSheet(qdarkstyle.load_stylesheet())
+
+        self.main_window.setStyleSheet(qdarkstyle.load_stylesheet() + open('style.css', 'r').read())
+
 
         # Set up temporary datacube
         self.datacube = DataCube(data=np.zeros((10,10,10,10)))
@@ -306,19 +308,33 @@ class DataViewer(QtWidgets.QMainWindow):
 
         return self.control_widget
 
+    # def save_current_space(self, diffractionSpace = True):
+    #     fileFilter = "tiff(*.tiff);; jpg(*.jpg)"
+    #     fileName,_ = QtWidgets.QFileDialog.getSaveFileName(None, "name", None, fileFilter)
+    #
+    #     if fileName == "":
+    #         return
+    #
+    #     if diffractionSpace :
+    #         img = self.diffraction_space_widget.image
+    #     else :
+    #         img = self.real_space_widget.image
+    #     print("Save image to "+fileName)
+    #     io.imsave(fileName, img)
+
     def save_current_space(self, diffractionSpace = True):
-        fileFilter = "tiff(*.tiff);; jpg(*.jpg)"
-        fileName,_ = QtWidgets.QFileDialog.getSaveFileName(None, "name", None, fileFilter)
+        fileFilter = "tiff(*.tiff);; jpg(*.jpg);; png(*.png)"
+        fileName, _ = QtWidgets.QFileDialog.getSaveFileName(None, "name", None, fileFilter)
 
         if fileName == "":
             return
 
-        if diffractionSpace :
-            img = self.diffraction_space_widget.image
-        else :
-            img = self.real_space_widget.image
-        print("Save image to "+fileName)
-        io.imsave(fileName, img)
+        if diffractionSpace:
+            img = self.diffraction_space_widget.export(fileName)
+        else:
+            img = self.real_space_widget.export(fileName)
+        print("Save image to " + fileName)
+
 
     def setup_diffraction_space_widget(self):
         # Create pyqtgraph ImageView object
