@@ -504,12 +504,14 @@ class DataViewer(QtWidgets.QMainWindow):
             self.datacube,
             [mk.RoiMask((slice(0, 1), slice(0, 1)), roiShape=cs.DetectorShape.point)]
         )
-        self.diffraction_space_widget.setImage(self.diffraction_space_view, autoLevels=True, autoRange=True)
+        self.diffraction_space_widget.setImage(self.diffraction_space_view, autoLevels=False, autoRange=True)
 
         # self.update_virtual_detector_mode()
         self.addShape_diffractionSpace(cs.DetectorShape.rectangular)
-        self.real_space_widget.autoLevels()
         self.real_space_point_selector = self.addShape_realSpace(cs.DetectorShape.point)
+
+        self.autoLevels(self.diffraction_space_widget)
+        self.autoLevels(self.real_space_widget)
 
         # Normalize diffraction space view
         self.diffraction_space_widget.ui.normDivideRadio.setChecked(True)
@@ -518,8 +520,6 @@ class DataViewer(QtWidgets.QMainWindow):
         # Set scan size maxima
         self.control_widget.spinBox_Nx.setMaximum(self.datacube.R_N)
         self.control_widget.spinBox_Ny.setMaximum(self.datacube.R_N)
-
-        self.real_space_widget.levelMin = 0
 
         # titleBar
         self.titleBar.addRecentFile(fname)
@@ -865,8 +865,8 @@ class DataViewer(QtWidgets.QMainWindow):
             new_diffraction_space_view, success = compute.get_diffraction_image(self.datacube, roi_mask_grp)
 
         else:
-            new_diffraction_space_view, success = compute.get_diffraction_image_color(self.datacube,
-                                                                           self.detectorGroup_realSpace)
+            new_diffraction_space_view, success = compute.get_color_diffraction_image(self.datacube,
+                                                                                      self.detectorGroup_realSpace)
 
         if success:
             # Scaling
@@ -896,7 +896,7 @@ class DataViewer(QtWidgets.QMainWindow):
             ## Get Virtual Image ##
             new_real_space_view, success = compute.get_virtual_image(self.datacube, roi_mask_grp, integration_mode=virtual_detector_mode)
         else:
-            new_real_space_view, success = compute.get_virtual_image_color(self.datacube, self.detectorGroup_diffractionSpace)
+            new_real_space_view, success = compute.get_color_virtual_image(self.datacube, self.detectorGroup_diffractionSpace)
 
         if success:
             ## Scaling ##
@@ -920,9 +920,11 @@ class DataViewer(QtWidgets.QMainWindow):
 
     def autoLevels(self, view):
         if self.settings.color_mode.val:
-            view.setLevels(min=view.image.min(), max=view.image.max())
+            # view.setLevels(min=view.image.min(), max=view.image.max())
+            view.setLevels(min=np.percentile(view.image,1), max=np.percentile(view.image,99))
         else :
-            view.autoLevels()
+            # view.autoLevels()
+            view.setLevels(min=np.percentile(view.image, 1), max=np.percentile(view.image, 99))
 
     def exec_(self):
         return self.qtapp.exec_()

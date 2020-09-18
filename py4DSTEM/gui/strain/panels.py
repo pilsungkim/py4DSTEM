@@ -109,7 +109,7 @@ class ProbeKernelTab(QtWidgets.QWidget):
 			dc = self.main_window.strain_window.vac_datacube
 			slices, transforms = self.diffraction_ROI.getArraySlice(dc.data[0,0,:,:], self.diffraction_widget.getImageItem())
 			mask = mk.RoiMask(slices, roiShape=cs.DetectorShape.rectangular)
-			rs = compute.get_virtual_image(dc, [mask], cs.DetectorModeType.integrate)
+			rs = compute.get_virtual_image_from_detectors(dc, [mask], cs.DetectorModeType.integrate)
 			new_real_space_view, success = rs
 			if success:
 				self.realspace_widget.setImage(new_real_space_view**0.5,autoLevels=True)
@@ -1396,7 +1396,7 @@ class StrainMapTab(QtWidgets.QWidget):
 		dc = self.main_window.datacube
 		slices, transforms = self.DP_ROI.getArraySlice(dc.data[0,0,:,:], self.DP_view.getImageItem())
 		mask = mk.RoiMask(slices, roiShape=cs.DetectorShape.rectangular)
-		rs = compute.get_virtual_image(dc,[mask],cs.DetectorModeType.integrate)
+		rs = compute.get_virtual_image_from_detectors(dc, [mask], cs.DetectorModeType.integrate)
 		new_real_space_view, success = rs
 
 		if success:

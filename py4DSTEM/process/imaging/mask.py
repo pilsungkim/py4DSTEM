@@ -124,11 +124,14 @@ def create_zero_mask(masks):
 
 
 def isOverlapped(mask_list: list):
+    if len(mask_list) == 1:
+        return False
+
     # create zero mask
     zero_mask = create_zero_mask(mask_list)
 
     # create new masks with zero mask shape
-    new_masks = [copy.deepcopy(zero_mask)] * len(mask_list)
+    new_masks = [copy.deepcopy(zero_mask) for _ in mask_list]
 
     # put data in new_masks
     for roiMask, new_mask in zip(mask_list, new_masks):
@@ -140,14 +143,13 @@ def isOverlapped(mask_list: list):
         ] = roiMask.data
 
     # merge it
-    rs_mask = copy.deepcopy(zero_mask)
-    for new_mask in new_masks:
+    rs_mask = new_masks[0]
+    for new_mask in new_masks[1:]:
         rs_mask.data = np.logical_and(new_mask.data, rs_mask.data)
+        if np.sum(rs_mask.data) > 0:
+            return True
 
-    if np.sum(rs_mask.data) > 0:
-        return True
-    else:
-        return False
+    return False
 
 
 def get_compound_mask_list(mask_list: list):

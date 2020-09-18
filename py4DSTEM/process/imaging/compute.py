@@ -5,7 +5,12 @@ from ...file.datastructure import datacube
 import numpy as np
 
 
+
 def get_virtual_image(datacube: datacube, masks: list, integration_mode: cs.DetectorModeType):
+    assert(isinstance(masks,list))
+    from ...gui.detector import DetectorGroup
+    if isinstance(masks, DetectorGroup):
+        masks = [detector.create_roi_mask() for detector in DetectorGroup if not detector.hide]
     if len(masks) == 0:
         return 0, 0
     masks = [a.trim_data_to_image() for a in masks]
@@ -27,8 +32,7 @@ def get_virtual_image(datacube: datacube, masks: list, integration_mode: cs.Dete
                 rs += img
     return rs, success
 
-
-def get_virtual_image_color(datacube: datacube, detectors: list):
+def get_color_virtual_image(datacube: datacube, detectors: list):
     if len([detector for detector in detectors if not detector.hide]) == 0:
         return 0, 0
     integrated_img = None
@@ -80,7 +84,7 @@ def get_diffraction_image(datacube: datacube, masks: list):
     return rs, success
 
 
-def get_diffraction_image_color(datacube: datacube, detectors: list):
+def get_color_diffraction_image(datacube: datacube, detectors: list):
     if len(detectors) == 0:
         return 0, 0
     integrated_img = None

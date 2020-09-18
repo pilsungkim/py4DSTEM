@@ -82,7 +82,7 @@ def pg_point_roi(view_box, x=0, y=0):
     """
     circ_roi = pg.CircleROI( (-0.5+x, -0.5+y), (2,2), movable=True, pen=(0,9))
     h = circ_roi.addTranslateHandle((0.5,0.5))
-    h.pen = pg.mkPen('r')
+    h.pen = circ_roi.pen
     h.update()
     view_box.addItem(circ_roi)
     circ_roi.removeHandle(0)

@@ -130,6 +130,7 @@ class ControlPanel(QtWidgets.QWidget):
         vLayout.setSpacing(0)
         vLayout.setContentsMargins(0,0,0,0)
         self.setLayout(vLayout)
+        self.setObjectName("ControlPanel")
 
         # Set geometry
         # self.setFixedHeight(600)
@@ -168,12 +169,6 @@ class PreprocessingTabs(QtWidgets.QTabWidget):
             self.spinBox_Nx.setMaximumWidth(60)
             self.spinBox_Ny.setMaximumWidth(60)
 
-            self.spinBox_Nx.setFont(normalFont)
-            self.spinBox_Ny.setFont(normalFont)
-            self.label_Nx.setFont(smallFont)
-            self.label_Ny.setFont(smallFont)
-            self.label_Reshape.setFont(normalFont)
-
             layout_Reshape_Nx = QtWidgets.QHBoxLayout()
             layout_Reshape_Nx.addWidget(self.label_Nx, 0, QtCore.Qt.AlignCenter)
             layout_Reshape_Nx.addWidget(self.spinBox_Nx, 1, QtCore.Qt.AlignCenter)
@@ -181,15 +176,16 @@ class PreprocessingTabs(QtWidgets.QTabWidget):
             layout_Reshape_Ny.addWidget(self.label_Ny, 0, QtCore.Qt.AlignCenter)
             layout_Reshape_Ny.addWidget(self.spinBox_Ny, 1, QtCore.Qt.AlignCenter)
 
-            layout_Reshape_N = QtWidgets.QVBoxLayout()
+            layout_Reshape_N = QtWidgets.QHBoxLayout()
             layout_Reshape_N.addLayout(layout_Reshape_Nx, 0)
             layout_Reshape_N.addLayout(layout_Reshape_Ny, 0)
 
-            layout_Reshape = QtWidgets.QHBoxLayout()
+            layout_Reshape = QtWidgets.QVBoxLayout()
             layout_Reshape.addWidget(self.label_Reshape, 4, QtCore.Qt.AlignCenter)
             layout_Reshape.addLayout(layout_Reshape_N, 5)
             # layout_Reshape.setContentsMargins(0,0,0,13)
             self.setLayout(layout_Reshape)
+            self.setObjectName("ReshapeTab")
 
     class BinTab(QtWidgets.QWidget):
         def __init__(self):
@@ -200,13 +196,8 @@ class PreprocessingTabs(QtWidgets.QTabWidget):
             self.spinBox_Bin_Diffraction.setMaximum(1000)
             self.pushButton_BinData = QtWidgets.QPushButton("Bin")
 
-            self.spinBox_Bin_Real.setFont(normalFont)
-            self.spinBox_Bin_Diffraction.setFont(normalFont)
             self.label_Bin_Q = QtWidgets.QLabel("Q ")
             self.label_Bin_R = QtWidgets.QLabel("R ")
-            self.label_Bin_Q.setFont(smallFont)
-            self.label_Bin_R.setFont(smallFont)
-            self.pushButton_BinData.setFont(normalFont)
 
             layout_Bin_Diffraction = QtWidgets.QHBoxLayout()
             layout_Bin_Diffraction.addWidget(self.label_Bin_Q, 0, QtCore.Qt.AlignCenter)
@@ -233,10 +224,6 @@ class PreprocessingTabs(QtWidgets.QTabWidget):
             self.pushButton_CropData = QtWidgets.QPushButton("Crop")
             self.label_Crop_Q = QtWidgets.QLabel("Q ")
             self.label_Crop_R = QtWidgets.QLabel("R ")
-
-            self.pushButton_CropData.setFont(normalFont)
-            self.label_Crop_Q.setFont(smallFont)
-            self.label_Crop_R.setFont(smallFont)
 
             layout_Crop_Diffraction = QtWidgets.QHBoxLayout()
             layout_Crop_Diffraction.addWidget(self.label_Crop_Q, 0, QtCore.Qt.AlignCenter)
@@ -266,10 +253,6 @@ class PreprocessingTabs(QtWidgets.QTabWidget):
             self.pushButton_EditFileMetadata.setMaximumWidth(80)
             self.pushButton_EditDirectoryMetadata.setMaximumWidth(100)
 
-            self.pushButton_EditFileMetadata.setFont(normalFont)
-            self.pushButton_EditDirectoryMetadata.setFont(normalFont)
-            self.label_EditMetadata.setFont(normalFont)
-
             layout_EditMetadata_Buttons = QtWidgets.QHBoxLayout()
             layout_EditMetadata_Buttons.addWidget(self.pushButton_EditDirectoryMetadata)
             layout_EditMetadata_Buttons.addWidget(self.pushButton_EditFileMetadata)
@@ -296,11 +279,15 @@ class ScalingTabs(QtWidgets.QTabWidget):
             QtWidgets.QWidget.__init__(self)
             diffraction_mode_widget_layout = QtWidgets.QVBoxLayout()
 
+            self.label = QtWidgets.QLabel('Scaling Diffraction Space')
+            self.label.setFixedHeight(20)
+
             self.radioButton_DP_Raw = QtWidgets.QRadioButton('Raw')
             self.radioButton_DP_Sqrt = QtWidgets.QRadioButton('Square Root')
             self.radioButton_DP_Log = QtWidgets.QRadioButton('Logartihm')
             self.radioButton_DP_EWPC = QtWidgets.QRadioButton('EWPC')
 
+            diffraction_mode_widget_layout.addWidget(self.label)
             diffraction_mode_widget_layout.addWidget(self.radioButton_DP_Raw)
             diffraction_mode_widget_layout.addWidget(self.radioButton_DP_Sqrt)
             diffraction_mode_widget_layout.addWidget(self.radioButton_DP_Log)
@@ -324,11 +311,15 @@ class ScalingTabs(QtWidgets.QTabWidget):
             QtWidgets.QWidget.__init__(self)
             real_mode_widget_layout = QtWidgets.QVBoxLayout()
 
+            self.label = QtWidgets.QLabel('Scaling Real Space')
+            self.label.setFixedHeight(20)
+
             self.radioButton_DP_Raw = QtWidgets.QRadioButton('Raw')
             self.radioButton_DP_Sqrt = QtWidgets.QRadioButton('Square Root')
             self.radioButton_DP_Log = QtWidgets.QRadioButton('Logartihm')
             self.radioButton_DP_EWPC = QtWidgets.QRadioButton('EWPC')
 
+            real_mode_widget_layout.addWidget(self.label)
             real_mode_widget_layout.addWidget(self.radioButton_DP_Raw)
             real_mode_widget_layout.addWidget(self.radioButton_DP_Sqrt)
             real_mode_widget_layout.addWidget(self.radioButton_DP_Log)
@@ -368,12 +359,6 @@ class DetectorModeTabs(QtWidgets.QTabWidget):
             self.radioButton_DiffY = QtWidgets.QRadioButton('Difference, Y')
             self.radioButton_CoMX = QtWidgets.QRadioButton('Center of Mass, X')
             self.radioButton_CoMY = QtWidgets.QRadioButton('Center of Mass, Y')
-
-            self.radioButton_Integrate.setFont(normalFont)
-            self.radioButton_DiffX.setFont(normalFont)
-            self.radioButton_DiffY.setFont(normalFont)
-            self.radioButton_CoMX.setFont(normalFont)
-            self.radioButton_CoMY.setFont(normalFont)
 
             detector_mode_widget_layout.addWidget(self.radioButton_Integrate)
             detector_mode_widget_layout.addWidget(self.radioButton_DiffX)
@@ -418,10 +403,7 @@ class DetectorShapeTabs(QtWidgets.QTabWidget):
             self.pushButton_CircDetector = QtWidgets.QPushButton('Circular')
             self.pushButton_AnnularDetector = QtWidgets.QPushButton('Annular')
             self.pushButton_PointDetector = QtWidgets.QPushButton('Pick')
-            self.pushButton_RectDetector.setFont(normalFont)
-            self.pushButton_CircDetector.setFont(normalFont)
-            self.pushButton_AnnularDetector.setFont(normalFont)
-            self.pushButton_PointDetector.setFont(normalFont)
+
             detector_shape_button_layout.addWidget(self.pushButton_RectDetector)
             detector_shape_button_layout.addWidget(self.pushButton_CircDetector)
             detector_shape_button_layout.addWidget(self.pushButton_AnnularDetector)
@@ -543,7 +525,6 @@ class DetectorShapeWidget(QtWidgets.QWidget):
 
         # Shape Name #
         self.shapeName = QtWidgets.QLabel("Rectangular mask")
-        self.shapeName.setFont(normalFont)
         self.shapeName.setAlignment(Qt.AlignLeft)
         self.titlebar_layout.addWidget(self.shapeName, 2)
 
@@ -824,7 +805,6 @@ class SectionLabel(QtWidgets.QWidget):
         line_right.setLineWidth(1)
 
         label = QtWidgets.QLabel(section_title)
-        label.setFont(sectionFont)
 
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(line_left)
